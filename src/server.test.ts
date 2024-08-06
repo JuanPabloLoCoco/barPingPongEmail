@@ -180,6 +180,8 @@ describe("Email parsing", () => {
       expect(reservation.venue).toBe(expected.venue);
     }
     expect(reservation).toHaveProperty("startDate");
+    expect(reservation.startDate).toBeInstanceOf(Date);
+    expect(reservation.startDate).toEqual(expected.startDate);
 
     if (reservation.type === ReservationType.NEW) {
       expect(reservation).toHaveProperty("phone");
@@ -191,7 +193,7 @@ describe("Email parsing", () => {
   }
 
   test("Parse reservation email should return a new reservation object", () => {
-    const parsedEmail = emailParsing(newAppointment);
+    const parsedEmail = emailParsing(newAppointment, new Date("2024-01-01"));
 
     // expect(parsedEmail).toEqual(reservation);
     validateEmailParsing(parsedEmail, {
@@ -199,16 +201,18 @@ describe("Email parsing", () => {
       name: "Juan Ignacio",
       venue: "MESA 5 ROSITA",
       phone: "+541158030338",
+      startDate: new Date("2024-06-29T16:00:00Z"),
     });
   });
 
   test("Parse cancelation reservation shoul return a cancelation reservation object", () => {
-    const parsedEmail = emailParsing(cancelAppointment);
+    const parsedEmail = emailParsing(cancelAppointment, new Date("2024-01-01"));
 
     validateEmailParsing(parsedEmail, {
       type: ReservationType.CANCEL,
       name: "Rodrigo Gilabert",
       venue: "MESA 3",
+      startDate: new Date("2024-07-02T23:00:00Z"),
     });
   });
 });

@@ -1,4 +1,5 @@
 import { load } from "cheerio";
+import { parsingDate, separarFechaHora } from "./utils/parseDateTime";
 
 interface BaseReservation {
   name: string;
@@ -21,7 +22,10 @@ export interface CancelReservation extends BaseReservation {
   type: ReservationType.CANCEL;
 }
 
-export function emailParsing(html: string): NewReservation | CancelReservation {
+export function emailParsing(
+  html: string,
+  referenceDate: Date = new Date()
+): NewReservation | CancelReservation {
   // Parse the email
   const $ = load(html);
 
@@ -32,7 +36,7 @@ export function emailParsing(html: string): NewReservation | CancelReservation {
     $('h1:contains("¡Nueva reserva online!")').length > 0;
 
   if (isNewReservation) {
-    return parseNewReservation($, venue);
+    return parseNewReservation($, venue, referenceDate);
   }
 
   const isCancelReservation = $("body")
@@ -48,27 +52,38 @@ export function emailParsing(html: string): NewReservation | CancelReservation {
     .text() // Obtiene el texto del elemento
     .trim(); // Elimina espacios en blanco al principio y al final
 
+  const startDateStr = $('td:contains("Dia y hora")').next().text().trim();
+
+  let startDate: Date | null = null;
+  try {
+    startDate = parsingDate(startDateStr, referenceDate);
+  } catch (err) {
+    console.log("Error while parsing date");
+  }
+
   return {
     type: ReservationType.CANCEL,
     name,
     venue,
-    startDate: new Date(),
+    startDate: startDate || new Date(),
   };
 }
 
-function parseNewReservation($: cheerio.Root, venue: string): NewReservation {
+function parseNewReservation(
+  $: cheerio.Root,
+  venue: string,
+  referenceDate: Date
+): NewReservation {
   const name = $('td:contains("Nombre")').next().text().trim();
   const phone = $('td:contains("Teléfono")').next().text().trim();
   const startDateStr = $('td:contains("Dia y hora")').next().text().trim();
 
   // Convertir la fecha a un objeto Date
-  const parsedDate = startDateStr.match(/(\w+ \d+ de \w+ a las \d{2}:\d{2})/);
-  let startDate = null;
-
-  if (parsedDate) {
-    const [day, , month, , time] = parsedDate[0].split(/\sde\s| a las /);
-    const dateStr = `${day} ${month} ${new Date().getFullYear()} ${time}`;
-    startDate = new Date(dateStr);
+  let startDate: Date | null = null;
+  try {
+    startDate = parsingDate(startDateStr, referenceDate);
+  } catch (err) {
+    console.log("Error while parsing date");
   }
 
   return {
