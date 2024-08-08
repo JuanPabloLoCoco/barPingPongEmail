@@ -1,62 +1,31 @@
 import express from "express";
-import { ImapSimple, connect } from "imap-simple";
 import nodemailer from "nodemailer";
-import { simpleParser } from "mailparser";
+import dotenv from "dotenv";
+import cors from "cors";
+import { authMiddleware } from "./middleware/auth-middleware";
+import * as apiRoutes from "./routes/api-routes";
+import * as authRoutes from "./routes/auth-routes";
+
+dotenv.config();
 
 const app = express();
-const port = 8900;
 
-const imapConfig = {
-  imap: {
-    user: "your-email@example.com",
-    password: "your-password",
-    host: "imap.example.com",
-    port: 993,
-    tls: true,
-    authTimeout: 3000,
-  },
-};
+app.use(cors({ origin: true }));
+app.use(express.json());
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "your-email@example.com",
-    pass: "your-password",
-  },
-});
+// for parsing application/xwww-form-urlencoded
+app.use(express.urlencoded({ extended: true }));
 
-export async function readEmails() {
-  try {
-    console.log("Read email");
-    const connection: ImapSimple = await connect(imapConfig);
-    await connection.openBox("INBOX");
+// gmail auth routes
+app.use("/", authRoutes.router);
 
-    const searchCriteria = ["UNSEEN"];
-    const fetchOptions = {
-      bodies: ["HEADER.FIELDS (FROM TO SUBJECT DATE)", "TEXT"],
-      struct: true,
-    };
+// auth middleware for api routes
+app.use(authMiddleware);
 
-    const messages = await connection.search(searchCriteria, fetchOptions);
+// gmail api routes
+app.use("/api", apiRoutes.router);
 
-    for (const message of messages) {
-      const all = message.parts.find((part) => part.which === "TEXT");
-      const id = message.attributes.uid;
-      const idHeader = "Imap-Id: " + id + "\r\n";
-
-      if (all) {
-        const parsed = await simpleParser(idHeader + all.body);
-        console.log(parsed.subject);
-        console.log(parsed.from?.text);
-        console.log(parsed.text);
-      }
-    }
-
-    connection.end();
-  } catch (err) {
-    console.error(err);
-  }
-}
+const port = 8900; //process.env.PORT || 8900;
 
 export async function sendEmail(
   to: string,
@@ -86,8 +55,8 @@ export async function sendEmail(
   await transporter.sendMail(mailOptions);
 }
 
-app.get("/", async (req, res) => {
-  await readEmails();
+app.get("/reademails", async (req, res) => {
+  // await readEmails();
   res.send("Emails have been read and logged to the console.");
 });
 
@@ -96,10 +65,10 @@ if (require.main === module) {
     console.log(`Server is running at http://localhost:${port}`);
   });
 
-  const interval = setInterval(readEmails, 30 * 1000);
+  // const interval = setInterval(readEmails, 10 * 1000);
 
   server.on("close", () => {
-    clearInterval(interval);
+    // clearInterval(interval);
     server.close();
   });
 }

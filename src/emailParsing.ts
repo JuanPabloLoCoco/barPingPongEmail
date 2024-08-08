@@ -22,6 +22,8 @@ export interface CancelReservation extends BaseReservation {
   type: ReservationType.CANCEL;
 }
 
+export type EventType = NewReservation | CancelReservation;
+
 export function emailParsing(
   html: string,
   referenceDate: Date = new Date()

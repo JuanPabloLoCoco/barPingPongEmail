@@ -7,8 +7,12 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "resolveJsonModule": true,
+    "alwaysStrict": false,
+    "sourceMap": true
   },
+  "compileOnSave": true,
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
