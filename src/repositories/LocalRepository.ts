@@ -16,7 +16,7 @@ export class LocalReservationRepository implements ReservationRepository {
     this.idMap = new Map();
   }
 
-  create(reservation: NewReservation): CreatedReservation {
+  create(reservation: NewReservation): Promise<CreatedReservation> {
     const createdReservation: CreatedReservation = {
       id: `${reservation.startDate.getTime()}_${reservation.venue}_${
         reservation.name
@@ -27,35 +27,28 @@ export class LocalReservationRepository implements ReservationRepository {
       updatedAt: null,
     };
     this.idMap.set(createdReservation.id, createdReservation);
-    return createdReservation;
+    return Promise.resolve(createdReservation);
   }
   asignToken(
     reservation: CreatedReservation,
     newToken: string
-  ): ReservationWithToken {
+  ): Promise<ReservationWithToken> {
     const reservationWithToken: ReservationWithToken = {
       ...reservation,
       state: ReservationState.WITH_TOKEN,
       token: newToken,
     };
     this.idMap.set(reservationWithToken.id, reservationWithToken);
-    return reservationWithToken;
+    return Promise.resolve(reservationWithToken);
   }
-  get(
-    id: string
-  ):
-    | CreatedReservation
-    | ReservationWithToken
-    | NotifiedReservation
-    | CancelledReservation
-    | null {
+  get(id: string): Promise<ReservationType | null> {
     const reservationFound = this.idMap.get(id);
     if (!reservationFound) {
       throw new Error("Reservation not found");
     }
-    return reservationFound;
+    return Promise.resolve(reservationFound);
   }
-  cancel(id: string): CancelledReservation {
+  cancel(id: string): Promise<CancelledReservation> {
     const reservationFound = this.idMap.get(id);
     if (
       !reservationFound ||
@@ -71,24 +64,26 @@ export class LocalReservationRepository implements ReservationRepository {
       updatedAt: new Date(),
     };
     this.idMap.set(id, cancelledReservation);
-    return cancelledReservation;
+    return Promise.resolve(cancelledReservation);
   }
-  getFutureReservations(): NotifiedReservation[] {
+  getFutureReservations(): Promise<NotifiedReservation[]> {
     const today = new Date().getTime();
     const reservationArray = Array.from(this.idMap.values());
 
-    return reservationArray.filter(
-      (x) =>
-        x.state === ReservationState.NOTIFIED &&
-        x.reservation.startDate.getTime() >= today
-    ) as NotifiedReservation[];
+    return Promise.resolve(
+      reservationArray.filter(
+        (x) =>
+          x.state === ReservationState.NOTIFIED &&
+          x.reservation.startDate.getTime() >= today
+      ) as NotifiedReservation[]
+    );
   }
-  notify(reservation: ReservationWithToken): NotifiedReservation {
+  notify(reservation: ReservationWithToken): Promise<NotifiedReservation> {
     const notifiedReservation: NotifiedReservation = {
       ...reservation,
       state: ReservationState.NOTIFIED,
     };
     this.idMap.set(notifiedReservation.id, notifiedReservation);
-    return notifiedReservation;
+    return Promise.resolve(notifiedReservation);
   }
 }
