@@ -1,14 +1,17 @@
 import express from "express";
 import nodemailer from "nodemailer";
-import dotenv from "dotenv";
 import cors from "cors";
 import { authMiddleware } from "./middleware/auth-middleware";
 import * as apiRoutes from "./routes/api-routes";
 import * as authRoutes from "./routes/auth-routes";
-
-dotenv.config();
+import * as tuyaRoutes from "./routes/tuya-routes";
+import config from "./config";
 
 const app = express();
+
+if (!config.tuya.accessKey || !config.tuya.secretKey) {
+  throw new Error("Tuya access key and secret key are required.");
+}
 
 app.use(cors({ origin: true }));
 app.use(express.json());
@@ -25,6 +28,8 @@ app.use(authMiddleware);
 // gmail api routes
 app.use("/api", apiRoutes.router);
 
+//tuya routes
+app.use("/tuya", tuyaRoutes.router);
 const port = 8900; //process.env.PORT || 8900;
 
 export async function sendEmail(

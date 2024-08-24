@@ -5,11 +5,9 @@ declare namespace NodeJS {
     DB_USER: string;
     DB_PASS: string;
     // Add other environment variables here
-    EMAIL_USER: string;
-    EMAIL_PASS: string;
-    EMAIL_HOST: string;
-    EMAIL_PORT: number;
-    EMAIL_TLS: boolean;
-    EMAIL_TO: number;
+    TUYA_DEVICE_ID: string;
+    TUYA_HOST: string;
+    TUYA_ACCESS_KEY: string;
+    TUYA_SECRET_KEY: string;
   }
 }
