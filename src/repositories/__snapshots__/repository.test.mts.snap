@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LocalRepository test Should create a reservation 1`] = `
+{
+  "createdAt": Any<Date>,
+  "id": Any<String>,
+  "reservation": {
+    "endDate": {},
+    "name": "name",
+    "phone": "+5491140405050",
+    "startDate": {},
+    "type": "NEW",
+    "venue": "venue",
+  },
+  "state": "CREATED",
+  "updatedAt": null,
+}
+`;

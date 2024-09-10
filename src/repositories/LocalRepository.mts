@@ -1,4 +1,4 @@
-import { NewReservation } from "../emailParsing";
+import { NewReservation } from "../emailParsing.mjs";
 import {
   CancelledReservation,
   CreatedReservation,
@@ -7,20 +7,17 @@ import {
   ReservationState,
   ReservationType,
   ReservationWithToken,
-} from "./Reservation";
+} from "./Reservation.mjs";
 
+function buildId(date: Date, venue: string, name: string): string {
+  return `${date.getTime()}_${venue}_${name}`;
+}
 export class LocalReservationRepository implements ReservationRepository {
-  private idMap: Map<string, ReservationType> = new Map();
-
-  constructor() {
-    this.idMap = new Map();
-  }
+  idMap: Map<string, ReservationType> = new Map();
 
   create(reservation: NewReservation): Promise<CreatedReservation> {
     const createdReservation: CreatedReservation = {
-      id: `${reservation.startDate.getTime()}_${reservation.venue}_${
-        reservation.name
-      }`,
+      id: buildId(reservation.startDate, reservation.venue, reservation.name),
       state: ReservationState.CREATED,
       reservation,
       createdAt: new Date(),
@@ -31,12 +28,14 @@ export class LocalReservationRepository implements ReservationRepository {
   }
   asignToken(
     reservation: CreatedReservation,
-    newToken: string
+    token: string,
+    password_id: string
   ): Promise<ReservationWithToken> {
     const reservationWithToken: ReservationWithToken = {
       ...reservation,
       state: ReservationState.WITH_TOKEN,
-      token: newToken,
+      token,
+      password_id,
     };
     this.idMap.set(reservationWithToken.id, reservationWithToken);
     return Promise.resolve(reservationWithToken);
@@ -47,6 +46,15 @@ export class LocalReservationRepository implements ReservationRepository {
       throw new Error("Reservation not found");
     }
     return Promise.resolve(reservationFound);
+  }
+  findReservation(reservation: {
+    date: Date;
+    venue: string;
+    name: string;
+  }): Promise<ReservationType | null> {
+    const id = buildId(reservation.date, reservation.venue, reservation.name);
+    const reservationFound = this.idMap.get(id);
+    return Promise.resolve(reservationFound ?? null);
   }
   cancel(id: string): Promise<CancelledReservation> {
     const reservationFound = this.idMap.get(id);

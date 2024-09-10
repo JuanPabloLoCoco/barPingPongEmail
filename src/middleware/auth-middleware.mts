@@ -1,4 +1,4 @@
-import * as auth from "../functions/gmail-auth";
+import * as auth from "../functions/gmail-auth.mjs";
 import { Request, Response, NextFunction } from "express";
 
 export const authMiddleware = async (

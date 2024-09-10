@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import fs from "node:fs";
 import path from "node:path";
-import credentials from "../credentials.json";
+import credentials from "../credentials.json" with { type: 'json' };
 import { Credentials } from "google-auth-library";
 
 const SCOPES = [
@@ -10,7 +10,7 @@ const SCOPES = [
   "https://www.googleapis.com/auth/gmail.compose",
   "https://www.googleapis.com/auth/gmail.send",
 ];
-const TOKEN_PATH = path.join(__dirname, "../token.json");
+const TOKEN_PATH = path.join(import.meta.dirname, "../token.json");
 
 export const authorize = async () => {
   // check if the token already exists

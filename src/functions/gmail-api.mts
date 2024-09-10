@@ -2,11 +2,17 @@ import { google } from "googleapis";
 import { ParsedMail, simpleParser } from "mailparser";
 
 const gmail = google.gmail("v1");
+
+interface WithId<T = {}> {
+  email_id: string;
+  data: T;
+}
+
 /**
  * Get messages from gmail api
  * @return {array} the array of messages
  */
-export const getMessages = async () => {
+export const getMessages = async (): Promise<ParsedMail[]> => {
   const response = await gmail.users.messages.list({
     userId: "me",
     labelIds: ["INBOX", "UNREAD"],
@@ -32,14 +38,7 @@ export const getMessages = async () => {
     })
   );
 
-  const processedMails: ParsedMail[] = [];
-  for (const mail of processedMessages) {
-    if (mail) {
-      processedMails.push(mail);
-    }
-  }
-
-  return processedMails;
+  return processedMessages.filter((x) => x !== null) as ParsedMail[];
 };
 
 export const getMessage = async (id: string): Promise<ParsedMail> => {
@@ -52,17 +51,19 @@ export const getMessage = async (id: string): Promise<ParsedMail> => {
   const bufferedRawMessage = Buffer.from(rawMessage || "", "base64").toString(
     "utf-8"
   );
-  return await simpleParser(bufferedRawMessage);
+  const parsedEmail: ParsedMail = await simpleParser(bufferedRawMessage);
+  return { ...parsedEmail, messageId: id } as ParsedMail;
 };
 
 export const markAsRead = async (id: string) => {
-  await gmail.users.messages.modify({
+  const res = await gmail.users.messages.modify({
     userId: "me",
     id,
     requestBody: {
       removeLabelIds: ["UNREAD"],
     },
   });
+  console.log(res);
 };
 
 export const modifyMessageLabels = async (

@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import * as auth from "../functions/gmail-auth";
+import * as auth from "../functions/gmail-auth.mjs";
 
 const router = Router();
 /**

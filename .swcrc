@@ -1,17 +1,20 @@
 {
+  "$schema": "https://json.schemastore.org/swcrc",
   "jsc": {
     "parser": {
       "syntax": "typescript",
-      "tsx": true
+      "tsx": true,
+      "dynamicImport": true
     },
     "transform": {
       "react": {
         "runtime": "automatic"
       }
     },
-    "target": "es2015"
+    "target": "es2022"
   },
   "module": {
-    "type": "commonjs"
+    "type": "es6",
+    "strict": true
   }
 }

@@ -1,16 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "module": "commonjs",
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "resolveJsonModule": true,
     "alwaysStrict": false,
-    "sourceMap": true
+    "sourceMap": true,
+    "types": ["jest", "@testing-library/jest-dom"]
   },
   "compileOnSave": true,
   "include": ["src/**/*"],

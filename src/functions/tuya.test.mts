@@ -1,8 +1,9 @@
+import { describe, test, expect } from "@jest/globals";
 import {
   decriptAES128ECB,
   encryptAES128ECB,
   getSignedPassword,
-} from "./tuyaFns";
+} from "./tuyaFns.mjs";
 
 describe("Test tuya workflows", () => {
   test("Encript ticket & decrypt ticket", async () => {

@@ -1,4 +1,9 @@
-import { ErrorMessages, parsingDate, separarFechaHora } from "./parseDateTime";
+import { describe, test, expect } from "@jest/globals";
+import {
+  ErrorMessages,
+  parsingDate,
+  separarFechaHora,
+} from "./parseDateTime.mjs";
 
 describe("Parse date time - fn separar fecha hora", () => {
   const ex1 = "Saturday 29 de June a las 13:00";

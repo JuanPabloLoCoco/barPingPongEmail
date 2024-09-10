@@ -1,12 +1,55 @@
-import { Router } from "express";
+import aesjs from "aes-js";
+// import { ModeOfOperation, utils, padding } from "aes-js.js";
 import { createHmac, createHash } from "crypto";
 import qs from "qs";
-import { getSignedPassword } from "../functions/tuyaFns";
-import config from "../config";
+import config from "../config.mjs";
 
-const router = Router();
+// toBytes -> new TextEncoder().encode()
+// fromBytes -> new TextDecoder().decode()
+export function decriptAES128ECB(cypher: string, key: string) {
+  const _key = new TextEncoder().encode(key);
+  const iv = new TextEncoder().encode("0000000000000000");
+  const cypherBytes = Buffer.from(cypher, "hex"); // utils.hex.toBytes(cypher);
 
-// https://stackoverflow.com/questions/74994699/how-do-i-encrypt-a-password-for-tuya-smart-lock-open-api
+  // @ts-expect-error
+  const aesECB = new aesjs.ModeOfOperation.ecb(_key, iv);
+  const decryptedBytes = aesECB.decrypt(cypherBytes);
+
+  const newArr = aesjs.padding.pkcs7.strip(decryptedBytes);
+
+  return new TextDecoder().decode(newArr);
+}
+
+export function encryptAES128ECB(plaintext: string, key: string) {
+  const _key = new TextEncoder().encode(key);
+  const iv = new TextEncoder().encode("0000000000000000");
+
+  // @ts-expect-error
+  const aesECB = new aesjs.ModeOfOperation.ecb(_key, iv);
+  const textBytes = aesjs.padding.pkcs7.pad(
+    new TextEncoder().encode(plaintext)
+  );
+
+  const encryptedBytes = aesECB.encrypt(textBytes);
+
+  return aesjs.utils.hex.fromBytes(encryptedBytes);
+}
+
+export function getSignedPassword(
+  lock_password: string,
+  ticketKey: string,
+  clientSecret: string
+) {
+  const received = decriptAES128ECB(ticketKey, clientSecret);
+  return encryptAES128ECB(lock_password, received);
+}
+
+class InvalidRequestError extends Error {
+  constructor(message: string, reason: "code" | "message" = "code") {
+    super(message);
+    this.name = "InvalidRequestError";
+  }
+}
 
 interface GetTokenResult {
   result: {
@@ -18,13 +61,6 @@ interface GetTokenResult {
   success: boolean;
   t: number;
   tid: string;
-}
-
-class InvalidRequestError extends Error {
-  constructor(message: string, reason: "code" | "message" = "code") {
-    super(message);
-    this.name = "InvalidRequestError";
-  }
 }
 
 async function getSignedToken(): Promise<GetTokenResult> {
@@ -46,7 +82,6 @@ async function getSignedToken(): Promise<GetTokenResult> {
   }
   return tokenResult;
 }
-
 interface GetPasswordTicketRes {
   code: number;
   success: boolean;
@@ -80,7 +115,33 @@ async function getPasswordTicket(token: string): Promise<GetPasswordTicketRes> {
   return ticketResult;
 }
 
-interface createTemporaryPasswordRes {
+async function getTokenSigned(clientId: string): Promise<Headers> {
+  const timestamp = Date.now().toString();
+  const signUrl = "/v1.0/token?grant_type=1";
+  const contentHash = createHash("sha256").update("").digest("hex");
+  const stringToSign = ["GET", contentHash, "", signUrl].join("\n");
+  const signStr = clientId + timestamp + stringToSign;
+
+  return {
+    // @ts-expect-error
+    t: timestamp,
+    sign_method: "HMAC-SHA256",
+    client_id: config.tuya.accessKey,
+    sign: await encryptStr(signStr, config.tuya.secretKey),
+  };
+}
+
+/**
+ * HMAC-SHA256 crypto function
+ */
+async function encryptStr(str: string, secret: string): Promise<string> {
+  return createHmac("sha256", secret)
+    .update(str, "utf8")
+    .digest("hex")
+    .toUpperCase();
+}
+
+interface CreateTemporaryPasswordRes {
   code: number;
   success: boolean;
   t: number;
@@ -90,24 +151,51 @@ interface createTemporaryPasswordRes {
   };
 }
 
+export async function createDynamicKeyPassword(
+  name: string,
+  code: string,
+  effective_time: number,
+  invalid_time: number
+): Promise<{ error: Error } | { password_id: string }> {
+  try {
+    const token = await getSignedToken();
+
+    const ticket = await getPasswordTicket(token.result.access_token);
+
+    const tempPassword = await createTemporaryPassword(
+      token.result.access_token,
+      ticket.result.ticket_id,
+      ticket.result.ticket_key,
+      name,
+      effective_time,
+      invalid_time,
+      code
+    );
+    return { password_id: tempPassword.result.id.toString() };
+  } catch (err: unknown) {
+    if (typeof err === "string") {
+      return { error: new Error(err) };
+    }
+
+    return { error: err as Error };
+  }
+}
+
 async function createTemporaryPassword(
   token: string,
   ticket_id: string,
-  ticketKey: string
+  ticketKey: string,
+  name: string,
+  effective_time: number = Date.now(),
+  invalid_time: number = Date.now() + 360000,
+  code: string = "1234567"
 ) {
   const signUrl = `/v1.0/devices/${config.tuya.deviceId}/door-lock/temp-password`;
 
-  const effective_time = Date.now() + 360;
-  const invalid_time = effective_time + 360000;
-
-  const password = getSignedPassword(
-    "1234567",
-    ticketKey,
-    config.tuya.secretKey
-  );
+  const password = getSignedPassword(code, ticketKey, config.tuya.secretKey);
 
   const body = {
-    name: "Test 1",
+    name,
     password,
     effective_time,
     invalid_time,
@@ -128,75 +216,12 @@ async function createTemporaryPassword(
     throw new InvalidRequestError("Failed to create password", "code");
   }
 
-  const passwordResult = (await data.json()) as createTemporaryPasswordRes;
+  const passwordResult = (await data.json()) as CreateTemporaryPasswordRes;
   if (!passwordResult.success) {
     throw new InvalidRequestError("Failed to create password", "message");
   }
 
   return passwordResult;
-}
-
-router.get("/token", async (req, res) => {
-  try {
-    const token = await getSignedToken();
-    return res.send(token);
-  } catch (err) {
-    if (err instanceof InvalidRequestError) {
-      return res.send({ error: err.message }).status(400);
-    }
-
-    return res.send({ error: "Failed to get token" }).status(400);
-  }
-});
-
-router.get("/ticket", async (req, res) => {
-  try {
-    const token = await getSignedToken();
-
-    const ticket = await getPasswordTicket(token.result.access_token);
-
-    const tempPassword = await createTemporaryPassword(
-      token.result.access_token,
-      ticket.result.ticket_id,
-      ticket.result.ticket_key
-    );
-
-    return res.send(tempPassword);
-  } catch (err) {
-    if (err instanceof InvalidRequestError) {
-      return res.send({ error: err.message }).status(400);
-    }
-
-    return res.send({ error: "Failed to get token" }).status(500);
-  }
-});
-
-router.get("/encrypt", async (req, res) => {});
-
-/**
- * HMAC-SHA256 crypto function
- */
-async function encryptStr(str: string, secret: string): Promise<string> {
-  return createHmac("sha256", secret)
-    .update(str, "utf8")
-    .digest("hex")
-    .toUpperCase();
-}
-
-export async function getTokenSigned(clientId: string): Promise<Headers> {
-  const timestamp = Date.now().toString();
-  const signUrl = "/v1.0/token?grant_type=1";
-  const contentHash = createHash("sha256").update("").digest("hex");
-  const stringToSign = ["GET", contentHash, "", signUrl].join("\n");
-  const signStr = clientId + timestamp + stringToSign;
-
-  return {
-    // @ts-expect-error
-    t: timestamp,
-    sign_method: "HMAC-SHA256",
-    client_id: config.tuya.accessKey,
-    sign: await encryptStr(signStr, config.tuya.secretKey),
-  };
 }
 
 /**
@@ -207,7 +232,7 @@ export async function getTokenSigned(clientId: string): Promise<Headers> {
  * @param query
  * @param body
  */
-export async function getRequestSign(
+async function getRequestSign(
   token: string,
   path: string,
   method: string,
@@ -241,5 +266,3 @@ export async function getRequestSign(
     access_token: token,
   };
 }
-
-export { router };

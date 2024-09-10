@@ -1,5 +1,5 @@
 import { load } from "cheerio";
-import { parsingDate, separarFechaHora } from "./utils/parseDateTime";
+import { parsingDate, separarFechaHora } from "./utils/parseDateTime.mjs";
 
 interface BaseReservation {
   name: string;
@@ -72,7 +72,7 @@ export function emailParsing(
 }
 
 function parseNewReservation(
-  $: cheerio.Root,
+  $: Root,
   venue: string,
   referenceDate: Date
 ): NewReservation {
