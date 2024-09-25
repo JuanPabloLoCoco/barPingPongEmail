@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LocalRepository test Happy case 1`] = `
+{
+  "createdAt": Any<Date>,
+  "id": Any<String>,
+  "reservation": {
+    "endDate": {},
+    "name": "name",
+    "phone": "+5491140405050",
+    "startDate": {},
+    "type": "NEW",
+    "venue": "venue",
+  },
+  "state": "CREATED",
+  "updatedAt": null,
+}
+`;
+
+exports[`LocalRepository test Happy case 2`] = `
+{
+  "createdAt": Any<Date>,
+  "id": Any<String>,
+  "password_id": "1234567",
+  "reservation": {
+    "endDate": {},
+    "name": "name",
+    "phone": "+5491140405050",
+    "startDate": {},
+    "type": "NEW",
+    "venue": "venue",
+  },
+  "state": "WITH_TOKEN",
+  "token": "1234567",
+  "updatedAt": Any<Date>,
+}
+`;
+
+exports[`LocalRepository test Happy case 3`] = `
+{
+  "createdAt": Any<Date>,
+  "id": Any<String>,
+  "password_id": "1234567",
+  "reservation": {
+    "endDate": {},
+    "name": "name",
+    "phone": "+5491140405050",
+    "startDate": {},
+    "type": "NEW",
+    "venue": "venue",
+  },
+  "state": "NOTIFIED",
+  "token": "1234567",
+  "updatedAt": Any<Date>,
+}
+`;
+
+exports[`LocalRepository test Happy case 4`] = `
+{
+  "createdAt": Any<Date>,
+  "id": Any<String>,
+  "reservation": {
+    "endDate": {},
+    "name": "name",
+    "phone": "+5491140405050",
+    "startDate": {},
+    "type": "NEW",
+    "venue": "venue",
+  },
+  "state": "CANCELLED",
+  "updatedAt": Any<Date>,
+}
+`;

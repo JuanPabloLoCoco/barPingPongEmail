@@ -1,81 +1,30 @@
-import express from "express";
-import nodemailer from "nodemailer";
-import cors from "cors";
-import { authMiddleware } from "./middleware/auth-middleware";
-import * as apiRoutes from "./routes/api-routes";
-import * as authRoutes from "./routes/auth-routes";
-import * as tuyaRoutes from "./routes/tuya-routes";
-import config from "./config";
+import express, { Request, Response } from "express";
+import next from "next";
 
-const app = express();
+import { router as authRoutes } from "./api/routes/authRoutes";
 
-if (!config.tuya.accessKey || !config.tuya.secretKey) {
-  throw new Error("Tuya access key and secret key are required.");
-}
+const dev = process.env.NODE_ENV !== "production";
+const app = next({ dev });
+const handle = app.getRequestHandler();
+const port = process.env.PORT || 8900;
 
-app.use(cors({ origin: true }));
-app.use(express.json());
+app.prepare().then(() => {
+  const server = express();
 
-// for parsing application/xwww-form-urlencoded
-app.use(express.urlencoded({ extended: true }));
-
-// gmail auth routes
-app.use("/", authRoutes.router);
-
-// auth middleware for api routes
-app.use(authMiddleware);
-
-// gmail api routes
-app.use("/api", apiRoutes.router);
-
-//tuya routes
-app.use("/tuya", tuyaRoutes.router);
-const port = 8900; //process.env.PORT || 8900;
-
-export async function sendEmail(
-  to: string,
-  subject: string,
-  text: string
-): Promise<void> {
-  // Create a transporter object using SMTP transport
-  const transporter = nodemailer.createTransport({
-    host: "smtp.example.com", // Replace with your SMTP server host
-    port: 587, // Replace with your SMTP server port
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: "your-email@example.com", // Replace with your email
-      pass: "your-email-password", // Replace with your email password
-    },
+  // Custom Express route
+  server.get("/api/hello", (req: Request, res: Response) => {
+    res.json({ message: "Hello from the custom Express server!" });
   });
 
-  // Define the email options
-  const mailOptions = {
-    from: "your-email@example.com", // Replace with your email
-    to,
-    subject,
-    text,
-  };
+  server.use("/api/gmail", authRoutes);
 
-  // Send the email
-  await transporter.sendMail(mailOptions);
-}
+  // Handle all other routes with Next.js
+  server.all("*", (req: Request, res: Response) => {
+    return handle(req, res);
+  });
 
-app.get("/reademails", async (req, res) => {
-  // await readEmails();
-  res.send("Emails have been read and logged to the console.");
+  server.listen(port, (err?: any) => {
+    if (err) throw err;
+    console.log(`> Ready on http://localhost:${port}`);
+  });
 });
-
-if (require.main === module) {
-  const server = app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
-  });
-
-  // const interval = setInterval(readEmails, 10 * 1000);
-
-  server.on("close", () => {
-    // clearInterval(interval);
-    server.close();
-  });
-}
-
-export { app };
