@@ -9,6 +9,10 @@ interface Config {
     secretKey: string;
     deviceId: string;
   };
+  twilio: {
+    accountSid: string;
+    accessToken: string;
+  };
 }
 
 const config: Config = {
@@ -21,6 +25,10 @@ const config: Config = {
     secretKey: process.env.TUYA_SECRET_KEY || "",
     /* Interface example device_ID */
     deviceId: process.env.TUYA_DEVICE_ID || "",
+  },
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID || "",
+    accessToken: process.env.TWILIO_ACCESS_TOKEN || "",
   },
 };
 

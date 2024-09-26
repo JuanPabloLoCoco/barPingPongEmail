@@ -7,10 +7,14 @@ import {
 } from "../repositories/Reservation";
 import { proccessMessages } from "../routes/messagesRoutes";
 import { createDynamicKeyPassword } from "../tuya";
+import { SMSService } from "./SMSService";
 
 export class ReservationService {
   reservationRepository: ReservationRepository;
-  constructor(reservationRepository: ReservationRepository) {
+  constructor(
+    reservationRepository: ReservationRepository,
+    smsService: SMSService
+  ) {
     this.reservationRepository = reservationRepository;
   }
 

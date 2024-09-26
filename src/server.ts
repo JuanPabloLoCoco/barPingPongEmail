@@ -10,6 +10,8 @@ import {
   getOAuth2Client,
   saveToken,
 } from "./api/gmail/auth";
+import { SMSServiceImpl } from "./api/services/SMSService";
+import config from "./config";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -23,8 +25,6 @@ app.prepare().then(() => {
   server.get("/api/hello", (req: Request, res: Response) => {
     res.json({ message: "Hello from the custom Express server!" });
   });
-
-  server.use("/api/gmail", authRoutes);
 
   /**
    * Route for authtenticate user, otherwise request a new token
@@ -82,7 +82,15 @@ app.prepare().then(() => {
     console.log(`> Ready on http://localhost:${port}`);
 
     const localRepository = new LocalReservationRepository();
-    const reservationService = new ReservationService(localRepository);
+    const twilioService = new SMSServiceImpl(
+      "+5491158767333",
+      config.twilio.accessToken,
+      config.twilio.accountSid
+    );
+    const reservationService = new ReservationService(
+      localRepository,
+      twilioService
+    );
 
     const interval = setInterval(
       () => reservationService.readEmails(),
