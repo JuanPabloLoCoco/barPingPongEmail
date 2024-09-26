@@ -1,6 +1,6 @@
 import { createHmac, createHash } from "crypto";
 import qs from "qs";
-import config from "@/src/config";
+import config from "../../config";
 import { getSignedPassword } from "./encriptation";
 
 class InvalidRequestError extends Error {
