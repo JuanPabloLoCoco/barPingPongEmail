@@ -2,6 +2,9 @@ import express, { Request, Response } from "express";
 import next from "next";
 
 import { router as authRoutes } from "./api/routes/authRoutes";
+import { router as messagesRoutes } from "./api/routes/messagesRoutes";
+import { LocalReservationRepository } from "./api/repositories/LocalRepository";
+import { ReservationService } from "./api/services/ReservationService";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -17,6 +20,7 @@ app.prepare().then(() => {
   });
 
   server.use("/api/gmail", authRoutes);
+  server.use("/api/messages", messagesRoutes);
 
   // Handle all other routes with Next.js
   server.all("*", (req: Request, res: Response) => {
@@ -26,5 +30,13 @@ app.prepare().then(() => {
   server.listen(port, (err?: any) => {
     if (err) throw err;
     console.log(`> Ready on http://localhost:${port}`);
+
+    const localRepository = new LocalReservationRepository();
+    const reservationService = new ReservationService(localRepository);
+
+    const interval = setInterval(
+      () => reservationService.readEmails(),
+      30 * 1000
+    );
   });
 });
