@@ -132,3 +132,4 @@ dist
 # Credendedtials
 credentials.json
 token.json
+firebase-config.json

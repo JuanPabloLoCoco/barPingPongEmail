@@ -4,9 +4,9 @@ import cors from "cors";
 import { authMiddleware } from "./api/middleware/auth.mjs";
 import { router as authRoutes } from "./api/routes/authRoutes.mjs";
 import { ReservationService } from "./api/services/ReservationService.mjs";
-import { LocalReservationRepository } from "./api/repositories/LocalRepository.mjs";
 import config from "./config.mjs";
 import { SMSServiceImpl } from "./api/services/SMSService.mjs";
+import { FirebaseRepository } from "./api/repositories/FirebaseRepository.mjs";
 
 const app = express();
 
@@ -21,7 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // gmail auth routes
-app.use("/", authRoutes);
+app.use("/gmail", authRoutes);
 
 // auth middleware for api routes
 app.use(authMiddleware);
@@ -65,14 +65,14 @@ const server = app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
 
-const localRepository = new LocalReservationRepository();
+const firebaseRepository = new FirebaseRepository(config.firebase.databaseUrl);
 const twilioService = new SMSServiceImpl(
   "+5491158767333",
   config.twilio.accessToken,
   config.twilio.accountSid
 );
 const reservationService = new ReservationService(
-  localRepository,
+  firebaseRepository,
   twilioService
 );
 
