@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import fs from "node:fs";
 import path from "node:path";
-import credentials from "../../credentials.json" with { type: 'json' };
+import credentials from "../../../credentials.json" with { type: 'json' };
 import { Credentials } from "google-auth-library";
 
 const SCOPES = [
