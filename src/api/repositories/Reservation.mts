@@ -1,4 +1,4 @@
-import { NewReservation } from "../emailParsing.mjs";
+import { NewReservation } from "../parseEmail/emailParsing.mjs";
 
 export type ReservationType =
   | CreatedReservation

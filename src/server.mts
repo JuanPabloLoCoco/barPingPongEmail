@@ -3,9 +3,10 @@ import express from "express";
 import cors from "cors";
 import { authMiddleware } from "./api/middleware/auth.mjs";
 import { router as authRoutes } from "./api/routes/authRoutes.mjs";
-import { ReservationService } from "./api/services/ReservationService";
+import { ReservationService } from "./api/services/ReservationService.mjs";
 import { LocalReservationRepository } from "./api/repositories/LocalRepository.mjs";
 import config from "./config.mjs";
+import { SMSServiceImpl } from "./api/services/SMSService.mjs";
 
 const app = express();
 
@@ -65,7 +66,15 @@ const server = app.listen(port, () => {
 });
 
 const localRepository = new LocalReservationRepository();
-const reservationService = new ReservationService(localRepository);
+const twilioService = new SMSServiceImpl(
+  "+5491158767333",
+  config.twilio.accessToken,
+  config.twilio.accountSid
+);
+const reservationService = new ReservationService(
+  localRepository,
+  twilioService
+);
 
 const interval = setInterval(() => reservationService.readEmails(), 30 * 1000);
 

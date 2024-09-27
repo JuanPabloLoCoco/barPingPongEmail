@@ -7,11 +7,17 @@ import {
   ReservationState,
 } from "../repositories/Reservation.mjs";
 import { proccessMessages } from "../routes/messageRoutes.mjs";
+import { SMSService } from "./SMSService.mjs";
 
 export class ReservationService {
   reservationRepository: ReservationRepository;
-  constructor(reservationRepository: ReservationRepository) {
+  smsService: SMSService;
+  constructor(
+    reservationRepository: ReservationRepository,
+    smsService: SMSService
+  ) {
     this.reservationRepository = reservationRepository;
+    this.smsService = smsService;
   }
 
   async readEmails(): Promise<void> {
