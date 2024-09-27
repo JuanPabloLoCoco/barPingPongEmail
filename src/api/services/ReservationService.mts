@@ -208,5 +208,5 @@ function generateReservationMessage(
   }).format(date);
 
   return `Hola ${name}! \n
-  Tu código de reserva para jugar en ${venue} de Bar ping Pong el ${formatoFecha} es ${token}`;
+  Tu código de reserva para jugar en ${venue} de Bar ping Pong el ${formatoFecha} es ${token}#`;
 }

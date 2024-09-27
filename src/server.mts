@@ -36,7 +36,7 @@ const server = app.listen(port, () => {
 const firebaseRepository = new FirebaseRepository(config.firebase.databaseUrl);
 firebaseRepository.configure();
 const twilioService = new SMSServiceImpl(
-  "+5491158767333",
+  "+19546378467",
   config.twilio.accessToken,
   config.twilio.accountSid
 );
