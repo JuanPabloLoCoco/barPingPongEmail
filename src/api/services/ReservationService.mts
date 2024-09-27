@@ -11,6 +11,7 @@ import {
 import {
   EvtReservationCreated,
   ReservationRepository,
+  ReservationState,
 } from "../repositories/Reservation.mjs";
 import { EmailData, proccessMessages } from "../routes/messageRoutes.mjs";
 import { createDynamicKeyPassword } from "../tuya/index.mjs";
@@ -66,15 +67,25 @@ export class ReservationService {
 
     for (const operation of listOfOperations) {
       if (operation.op.type === ReservationType.CANCEL) {
-        // const found = await this.reservationRepository.findReservation({
-        //   date: operation.startDate,
-        //   name: operation.name,
-        //   venue: operation.venue,
-        // });
+        const found = await this.reservationRepository.findEmailReservation(
+          operation.op
+        );
 
-        // if (!found || found.state === ReservationState.CANCELLED) {
-        //   continue;
-        // }
+        if (!found) {
+          console.log(
+            `[${new Date()}] Cancel for reservation ${operation.op.name} - ${
+              operation.op.startDate
+            } - ${operation.op.venue} not found`
+          );
+          continue;
+        }
+
+        // As is found - try to delete created password
+
+        // Try to delete password
+
+        // Mark reservation as deleted
+
         // this.reservationRepository.cancel(found.id);
         // console.log(
         //   `[${new Date()}] Reservation cancelled: ${found.id} - Date: ${

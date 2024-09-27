@@ -176,6 +176,9 @@ async function createTemporaryPassword(
   }
 
   const passwordResult = (await data.json()) as CreateTemporaryPasswordRes;
+  // TODO: Verify that operation was successful
+  console.log(`Result for code: ${code}`);
+  console.log(passwordResult);
   if (!passwordResult.success) {
     throw new InvalidRequestError("Failed to create password", "message");
   }

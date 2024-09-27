@@ -1,10 +1,12 @@
 import { EmailAddress } from "mailparser";
 import { EmailData } from "../routes/messageRoutes.mjs";
+import { CancelReservation } from "../parseEmail/emailParsing.mjs";
 
 export interface EmailDataWithId extends EmailData {
   id: string;
 }
 export interface ReservationRepository {
+  findEmailReservation(op: CancelReservation): unknown;
   storeCreatedReservation(p: EvtReservationCreated): Promise<void>;
   storeFailToNotifyClient(p: EvtReservationCreated): Promise<void>;
   storeFailToCreatePassword(p: EvtFailToCreatePassword): Promise<void>;

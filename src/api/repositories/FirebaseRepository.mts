@@ -10,6 +10,7 @@ import {
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { EmailAddress } from "mailparser";
+import { CancelReservation } from "../parseEmail/emailParsing.mjs";
 export class FirebaseRepository implements ReservationRepository {
   databaseUrl: string;
   app: admin.app.App | null;
@@ -112,5 +113,38 @@ export class FirebaseRepository implements ReservationRepository {
       passwordId: p.passwordId,
     });
     return;
+  }
+
+  async findEmailReservation(
+    op: CancelReservation
+  ): Promise<(EvtReservationCreated & { id: string }) | null> {
+    const snapshot = await this.getDb()
+      .ref("r")
+      .orderByChild("startDate")
+      .equalTo(op.startDate.getTime())
+      .once("value");
+
+    if (!snapshot.exists()) {
+      return null;
+    }
+
+    const response: (EvtReservationCreated & { id: string })[] = [];
+    snapshot.forEach((child) => {
+      const val = child.val();
+
+      if (
+        val.startDate === op.startDate.getTime() &&
+        (val.venue as string) === op.venue &&
+        (val.name as string) === op.name &&
+        (val.phone as string) === op.name
+      ) {
+        response.push({ ...val, id: child.key as string });
+      }
+    });
+
+    if (response.length === 0) {
+      return null;
+    }
+    return response[0];
   }
 }
