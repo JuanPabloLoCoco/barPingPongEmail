@@ -1,47 +1,8 @@
 import { createHmac, createHash } from "crypto";
-import qs from "qs";
 import config from "../../config.mjs";
 import { getSignedPassword } from "./encriptation.mjs";
-
-class InvalidRequestError extends Error {
-  constructor(message: string, reason: "code" | "message" = "code") {
-    super(message);
-    this.name = "InvalidRequestError";
-  }
-}
-
-interface GetTokenResult {
-  result: {
-    access_token: string;
-    expire_time: number;
-    refresh_token: string;
-    uid: string;
-  };
-  success: boolean;
-  t: number;
-  tid: string;
-}
-
-async function getSignedToken(): Promise<GetTokenResult> {
-  const signUrl = "/v1.0/token?grant_type=1";
-  const headers: Headers = await getTokenSigned(config.tuya.accessKey);
-
-  const data = await fetch(`${config.tuya.host}${signUrl}`, {
-    method: "GET",
-    headers,
-  });
-
-  if (!data.ok) {
-    throw new InvalidRequestError("Failed to get token");
-  }
-
-  const tokenResult = (await data.json()) as GetTokenResult;
-  if (!tokenResult.success) {
-    throw new InvalidRequestError("Failed to get token");
-  }
-  return tokenResult;
-}
-interface GetPasswordTicketRes {
+import { TuyaContext, TuyaResponse } from "@tuya/tuya-connector-nodejs";
+export interface GetPasswordTicketRes {
   code: number;
   success: boolean;
   t: number;
@@ -53,84 +14,58 @@ interface GetPasswordTicketRes {
   };
 }
 
-async function getPasswordTicket(token: string): Promise<GetPasswordTicketRes> {
-  const signUrl = `/v1.0/devices/${config.tuya.deviceId}/door-lock/password-ticket`;
+interface GetPasswordTicket {
+  expire_time: number;
+  ticket_id: string;
+  ticket_key: string;
+}
 
-  const headers = await getRequestSign(token, signUrl, "POST", {}, {}, "");
-  const data = await fetch(`${config.tuya.host}${signUrl}`, {
+export async function getPasswordTicket(
+  tuyaContext: TuyaContext
+): Promise<TuyaResponse<GetPasswordTicket>> {
+  const tuyaRes = await tuyaContext.request<GetPasswordTicket>({
     method: "POST",
-    headers,
+    path: `/v1.0/devices/${config.tuya.deviceId}/door-lock/password-ticket`,
+    body: {},
   });
 
-  if (!data.ok) {
-    throw new InvalidRequestError("Failed to get password ticket", "code");
-  }
-
-  const ticketResult = (await data.json()) as GetPasswordTicketRes;
-  if (!ticketResult.success) {
-    throw new InvalidRequestError("Failed to get password ticket", "message");
-  }
-
-  return ticketResult;
-}
-
-async function getTokenSigned(clientId: string): Promise<Headers> {
-  const timestamp = Date.now().toString();
-  const signUrl = "/v1.0/token?grant_type=1";
-  const contentHash = createHash("sha256").update("").digest("hex");
-  const stringToSign = ["GET", contentHash, "", signUrl].join("\n");
-  const signStr = clientId + timestamp + stringToSign;
-
-  return {
-    // @ts-expect-error
-    t: timestamp,
-    sign_method: "HMAC-SHA256",
-    client_id: config.tuya.accessKey,
-    sign: await encryptStr(signStr, config.tuya.secretKey),
-  };
-}
-
-/**
- * HMAC-SHA256 crypto function
- */
-async function encryptStr(str: string, secret: string): Promise<string> {
-  return createHmac("sha256", secret)
-    .update(str, "utf8")
-    .digest("hex")
-    .toUpperCase();
-}
-
-interface CreateTemporaryPasswordRes {
-  code: number;
-  success: boolean;
-  t: number;
-  msg: string;
-  result: {
-    id: number;
-  };
+  return tuyaRes;
 }
 
 export async function createDynamicKeyPassword(
   name: string,
   code: string,
-  effective_time: number,
-  invalid_time: number
-): Promise<{ error: Error } | { password_id: string }> {
+  effective_time: Date,
+  invalid_time: Date
+): Promise<{ error: Error } | { password_id: number }> {
   try {
-    const token = await getSignedToken();
+    const context = new TuyaContext({
+      baseUrl: config.tuya.host,
+      accessKey: config.tuya.accessKey,
+      secretKey: config.tuya.secretKey,
+    });
 
-    const ticket = await getPasswordTicket(token.result.access_token);
+    const ticket = await getPasswordTicket(context);
 
-    const tempPassword = await createTemporaryPassword(
-      token.result.access_token,
+    if (!ticket.success) {
+      return { error: new Error("Failed to create ticket") };
+    }
+
+    const password = await createTemporaryPasswordWithContext(
       ticket.result.ticket_id,
       ticket.result.ticket_key,
       name,
       effective_time,
       invalid_time,
-      code
+      code,
+      context
     );
-    return { password_id: tempPassword.result.id.toString() };
+
+    if (!password.success) {
+      return { error: new Error("Failed to create password") };
+    }
+
+    return { password_id: password.result.id };
   } catch (err: unknown) {
     if (typeof err === "string") {
       return { error: new Error(err) };
@@ -140,18 +75,25 @@ export async function createDynamicKeyPassword(
   }
 }
 
-async function createTemporaryPassword(
-  token: string,
-  ticket_id: string,
-  ticketKey: string,
-  name: string,
-  effective_time: number = Date.now(),
-  invalid_time: number = Date.now() + 360000,
-  code: string = "1234567"
-) {
-  const signUrl = `/v1.0/devices/${config.tuya.deviceId}/door-lock/temp-password`;
+interface CreateTemporaryPasswod {
+  id: number;
+}
 
-  const password = getSignedPassword(code, ticketKey, config.tuya.secretKey);
+export async function createTemporaryPasswordWithContext(
+  ticket_id: string,
+  ticket_key: string,
+  name: string,
+  effective_time_date: Date,
+  invalid_time_date: Date,
+  code: string,
+  tuyaContext: TuyaContext
+): Promise<TuyaResponse<CreateTemporaryPasswod>> {
+  const signUrl = `/v1.0/devices/${config.tuya.deviceId}/door-lock/temp-password`;
+  const password = getSignedPassword(code, ticket_key, config.tuya.secretKey);
+
+  // We transform the Date object in seconds
+  const effective_time = effective_time_date.getTime() / 1000;
+  const invalid_time = invalid_time_date.getTime() / 1000;
 
   const body = {
     name,
@@ -162,69 +104,9 @@ async function createTemporaryPassword(
     ticket_id,
   };
 
-  const headers = await getRequestSign(token, signUrl, "POST", {}, {}, body);
-
-  const url = `${config.tuya.host}${signUrl}`;
-  const data = await fetch(url, {
+  return await tuyaContext.request<CreateTemporaryPasswod>({
     method: "POST",
-    headers,
-    body: JSON.stringify(body),
+    path: signUrl,
+    body,
   });
-
-  if (!data.ok) {
-    throw new InvalidRequestError("Failed to create password", "code");
-  }
-
-  const passwordResult = (await data.json()) as CreateTemporaryPasswordRes;
-  // TODO: Verify that operation was successful
-  console.log(`Result for code: ${code}`);
-  console.log(passwordResult);
-  if (!passwordResult.success) {
-    throw new InvalidRequestError("Failed to create password", "message");
-  }
-
-  return passwordResult;
-}
-
-/**
- * request sign, save headers
- * @param path
- * @param method
- * @param headers
- * @param query
- * @param body
- */
-async function getRequestSign(
-  token: string,
-  path: string,
-  method: string,
-  headers: { [k: string]: string } = {},
-  query: { [k: string]: any } = {},
-  body: { [k: string]: any } | "" = "",
-  timestamp: number = Date.now()
-) {
-  const t = timestamp.toString();
-  const [uri, pathQuery] = path.split("?");
-  const queryMerged = Object.assign(query, qs.parse(pathQuery));
-  const sortedQuery: { [k: string]: string } = {};
-  Object.keys(queryMerged)
-    .sort()
-    .forEach((i) => (sortedQuery[i] = query[i]));
-
-  const querystring = decodeURIComponent(qs.stringify(sortedQuery));
-  const url = querystring ? `${uri}?${querystring}` : uri;
-  const contentHash = createHash("sha256")
-    .update(typeof body === "string" ? "" : JSON.stringify(body))
-    .digest("hex");
-
-  const stringToSign = [method, contentHash, "", url].join("\n");
-  const signStr = config.tuya.accessKey + token + t + stringToSign;
-  return {
-    t,
-    path: url,
-    client_id: config.tuya.accessKey,
-    sign: await encryptStr(signStr, config.tuya.secretKey),
-    sign_method: "HMAC-SHA256",
-    access_token: token,
-  };
 }

@@ -17,6 +17,16 @@ import { EmailData, proccessMessages } from "../routes/messageRoutes.mjs";
 import { createDynamicKeyPassword } from "../tuya/index.mjs";
 import { SMSService } from "./SMSService.mjs";
 
+function generateName(venue: string, name: string): string {
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+
+  return `${venue}-${initials}`.slice(0, 10);
+}
+
 export class ReservationService {
   reservationRepository: ReservationRepository;
   smsService: SMSService;
@@ -102,13 +112,15 @@ export class ReservationService {
       let password_id: string = "";
       const startDateSeconds = operation.op.startDate.getTime() / 1000;
       const endDateSeconds = startDateSeconds + 2 * 60 * 60; // 2 hours
+      const startDate = operation.op.startDate;
+      const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
       try {
         // Times should be sent in seconds
         const dinamicPassRes = await createDynamicKeyPassword(
-          `${operation.op.venue} - ${operation.op.name}`,
+          generateName(operation.op.venue, operation.op.name),
           keyCode,
-          startDateSeconds,
-          endDateSeconds
+          startDate,
+          endDate
         );
 
         if ("error" in dinamicPassRes) {
@@ -130,7 +142,7 @@ export class ReservationService {
 
           continue;
         }
-        password_id = dinamicPassRes.password_id;
+        password_id = `${dinamicPassRes.password_id}`;
       } catch (error) {
         console.error(
           `[${new Date()}] Error creating password: ${(error as Error).message}`

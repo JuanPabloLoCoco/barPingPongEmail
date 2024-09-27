@@ -14,6 +14,9 @@ importers:
       '@swc-node/register':
         specifier: ^1.10.9
         version: 1.10.9(@swc/core@1.7.24)(@swc/types@0.1.12)(typescript@5.6.2)
+      '@tuya/tuya-connector-nodejs':
+        specifier: ^2.1.2
+        version: 2.1.2
       '@types/qs':
         specifier: ^6.9.16
         version: 6.9.16
@@ -764,6 +767,9 @@ packages:
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
 
+  '@tuya/tuya-connector-nodejs@2.1.2':
+    resolution: {integrity: sha512-8tM7QlOF1QQrT3iQgcHp4JDNRUdOyi06h8F5ZL7antQZYP67TRQ2/puisoo2uhdXo+n+GT0B605pWaDqr9nPrA==}
+
   '@tybys/wasm-util@0.9.0':
     resolution: {integrity: sha512-6+7nlbMVX/PVDCwaIQ8nTOPveOcFLSt8GcXdx8hD0bt39uWxYT88uXzqTd4fTvqta7oeUJqudepapKNt2DYJFw==}
 
@@ -984,6 +990,9 @@ packages:
 
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
+
+  axios@0.21.4:
+    resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
 
   axios@1.7.7:
     resolution: {integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==}
@@ -3866,6 +3875,13 @@ snapshots:
 
   '@tsconfig/node16@1.0.4': {}
 
+  '@tuya/tuya-connector-nodejs@2.1.2':
+    dependencies:
+      axios: 0.21.4
+      qs: 6.13.0
+    transitivePeerDependencies:
+      - debug
+
   '@tybys/wasm-util@0.9.0':
     dependencies:
       tslib: 2.7.0
@@ -4126,6 +4142,12 @@ snapshots:
     optional: true
 
   asynckit@0.4.0: {}
+
+  axios@0.21.4:
+    dependencies:
+      follow-redirects: 1.15.9
+    transitivePeerDependencies:
+      - debug
 
   axios@1.7.7:
     dependencies:
