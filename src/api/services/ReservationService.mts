@@ -100,14 +100,15 @@ export class ReservationService {
       // Generate token to reservation
       const keyCode = generateSevenDigitString();
       let password_id: string = "";
-      const startDate = operation.op.startDate.getTime();
-      const endDate = operation.op.startDate.getTime() + 2 * 60 * 60 * 1000; // 2 hours
+      const startDateSeconds = operation.op.startDate.getTime() / 1000;
+      const endDateSeconds = startDateSeconds + 2 * 60 * 60; // 2 hours
       try {
+        // Times should be sent in seconds
         const dinamicPassRes = await createDynamicKeyPassword(
           `${operation.op.venue} - ${operation.op.name}`,
           keyCode,
-          startDate,
-          endDate
+          startDateSeconds,
+          endDateSeconds
         );
 
         if ("error" in dinamicPassRes) {
@@ -116,9 +117,10 @@ export class ReservationService {
               dinamicPassRes.error.message
             }`
           );
+
           await this.reservationRepository.storeFailToCreatePassword({
             date: operation.e.date,
-            endDate: new Date(endDate),
+            endDate: new Date(endDateSeconds * 1000),
             startDate: operation.op.startDate,
             html: operation.e.html,
             name: operation.op.name,
@@ -136,7 +138,7 @@ export class ReservationService {
         // Unable to create password in Tuya
         await this.reservationRepository.storeFailToCreatePassword({
           date: operation.e.date,
-          endDate: new Date(endDate),
+          endDate: new Date(endDateSeconds),
           startDate: operation.op.startDate,
           html: operation.e.html,
           name: operation.op.name,
@@ -149,7 +151,7 @@ export class ReservationService {
       // Send SMS with token
       const dataToStore: EvtReservationCreated = {
         date: operation.e.date,
-        endDate: new Date(endDate),
+        endDate: new Date(endDateSeconds),
         startDate: operation.op.startDate,
         html: operation.e.html,
         name: operation.op.name,
