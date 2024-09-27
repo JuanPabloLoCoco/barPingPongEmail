@@ -12,6 +12,7 @@ import {
 } from "./api/gmail/auth";
 import { SMSServiceImpl } from "./api/services/SMSService";
 import config from "./config";
+import { FirebaseRepository } from "./api/repositories/FirebaseRepository";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -81,14 +82,16 @@ app.prepare().then(() => {
     if (err) throw err;
     console.log(`> Ready on http://localhost:${port}`);
 
-    const localRepository = new LocalReservationRepository();
+    const firebaseRepository = new FirebaseRepository(
+      config.firebase.databaseUrl
+    );
     const twilioService = new SMSServiceImpl(
       "+5491158767333",
       config.twilio.accessToken,
       config.twilio.accountSid
     );
     const reservationService = new ReservationService(
-      localRepository,
+      firebaseRepository,
       twilioService
     );
 

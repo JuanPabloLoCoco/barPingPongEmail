@@ -13,6 +13,9 @@ interface Config {
     accountSid: string;
     accessToken: string;
   };
+  firebase: {
+    databaseUrl: string;
+  };
 }
 
 const config: Config = {
@@ -29,6 +32,9 @@ const config: Config = {
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID || "",
     accessToken: process.env.TWILIO_ACCESS_TOKEN || "",
+  },
+  firebase: {
+    databaseUrl: process.env.FIREBASE_DATABASE_URL || "",
   },
 };
 

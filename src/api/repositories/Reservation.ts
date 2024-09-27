@@ -1,4 +1,5 @@
 import { NewReservation } from "../parseEmail/emailParsing";
+import { EmailData } from "../routes/messagesRoutes";
 
 export type ReservationType =
   | CreatedReservation
@@ -7,21 +8,22 @@ export type ReservationType =
   | CancelledReservation;
 
 export interface ReservationRepository {
-  create(reservation: NewReservation): Promise<CreatedReservation>;
-  asignToken(
-    reservation: CreatedReservation,
-    code: string,
-    password_id: string
-  ): Promise<ReservationWithToken>;
-  notify(reservation: ReservationWithToken): Promise<NotifiedReservation>;
-  get(id: string): Promise<ReservationType | null>;
-  findReservation(reservation: {
-    date: Date;
-    venue: string;
-    name: string;
-  }): Promise<ReservationType | null>;
-  getFutureReservations(): Promise<NotifiedReservation[]>;
-  cancel(id: string): Promise<CancelledReservation>;
+  storeMails(mails: EmailData[]): Promise<void>;
+  // create(reservation: NewReservation): Promise<CreatedReservation>;
+  // asignToken(
+  //   reservation: CreatedReservation,
+  //   code: string,
+  //   password_id: string
+  // ): Promise<ReservationWithToken>;
+  // notify(reservation: ReservationWithToken): Promise<NotifiedReservation>;
+  // get(id: string): Promise<ReservationType | null>;
+  // findReservation(reservation: {
+  //   date: Date;
+  //   venue: string;
+  //   name: string;
+  // }): Promise<ReservationType | null>;
+  // getFutureReservations(): Promise<NotifiedReservation[]>;
+  // cancel(id: string): Promise<CancelledReservation>;
 }
 
 export enum ReservationState {

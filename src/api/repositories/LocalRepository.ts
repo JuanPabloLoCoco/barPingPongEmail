@@ -15,6 +15,9 @@ function buildId(date: Date, venue: string): string {
 export class LocalReservationRepository implements ReservationRepository {
   idMap: Map<string, ReservationType> = new Map();
 
+  storeMails(): Promise<void> {
+    return Promise.resolve();
+  }
   create(reservation: NewReservation): Promise<CreatedReservation> {
     const createdReservation: CreatedReservation = {
       id: buildId(reservation.startDate, reservation.venue),

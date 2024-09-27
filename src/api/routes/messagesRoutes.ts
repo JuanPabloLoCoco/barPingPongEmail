@@ -16,10 +16,17 @@ router.get("/getMessages", async (req: Request, res: Response) => {
   }
 });
 
-export async function proccessMessages(): Promise<EventType[]> {
+export interface EmailData {
+  html: string;
+  from: EmailAddress[];
+  date: Date;
+  messageId: string;
+}
+
+export async function proccessMessages(): Promise<EmailData[]> {
   const messages = await getMessages();
 
-  const listOfOrders: EventType[] = [];
+  const listOfOrders: EmailData[] = [];
   for (const message of messages) {
     const html = message.html;
     if (!html) {
@@ -39,11 +46,16 @@ export async function proccessMessages(): Promise<EventType[]> {
         continue;
       }
 
-      const evt = emailParsing(html, new Date());
-      if (evt) {
-        listOfOrders.push(evt);
-        await markAsRead(message.messageId!);
-      }
+      // const evt = emailParsing(html, new Date());
+      console.log(message.date);
+      listOfOrders.push({
+        html,
+        from: fromAddress,
+        date: message.date || new Date(),
+        messageId: message.messageId!,
+      });
+
+      await markAsRead(message.messageId!);
     } catch (err) {
       continue;
     }

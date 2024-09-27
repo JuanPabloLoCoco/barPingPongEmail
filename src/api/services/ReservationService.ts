@@ -31,71 +31,73 @@ export class ReservationService {
     }
 
     console.log(`[${new Date()}] Reading emails...`);
-    const operations = await proccessMessages();
+    const mails = await proccessMessages();
 
-    if (operations.length === 0) {
-      console.log(`[${new Date()}] No new emails found`);
-      return;
-    }
+    await this.reservationRepository.storeMails(mails);
 
-    for (const operation of operations) {
-      if (operation.type === ReservationType.CANCEL) {
-        const found = await this.reservationRepository.findReservation({
-          date: operation.startDate,
-          name: operation.name,
-          venue: operation.venue,
-        });
+    // if (operations.length === 0) {
+    //   console.log(`[${new Date()}] No new emails found`);
+    //   return;
+    // }
 
-        if (!found || found.state === ReservationState.CANCELLED) {
-          continue;
-        }
-        this.reservationRepository.cancel(found.id);
-        console.log(
-          `[${new Date()}] Reservation cancelled: ${found.id} - Date: ${
-            found.reservation.startDate
-          } - Venue: ${found.reservation.venue} - Name: ${
-            found.reservation.name
-          } - Venue: ${found.reservation.venue}`
-        );
-        continue;
-      }
+    // for (const operation of operations) {
+    //   if (operation.type === ReservationType.CANCEL) {
+    //     const found = await this.reservationRepository.findReservation({
+    //       date: operation.startDate,
+    //       name: operation.name,
+    //       venue: operation.venue,
+    //     });
 
-      const reservation = await this.reservationRepository.create(operation);
-      console.log(
-        `[${new Date()}] Reservation created: ${reservation.id} - ${
-          operation.startDate
-        } - ${operation.name} - ${operation.venue}`
-      );
+    //     if (!found || found.state === ReservationState.CANCELLED) {
+    //       continue;
+    //     }
+    //     this.reservationRepository.cancel(found.id);
+    //     console.log(
+    //       `[${new Date()}] Reservation cancelled: ${found.id} - Date: ${
+    //         found.reservation.startDate
+    //       } - Venue: ${found.reservation.venue} - Name: ${
+    //         found.reservation.name
+    //       } - Venue: ${found.reservation.venue}`
+    //     );
+    //     continue;
+    //   }
 
-      // Generate token to reservation
-      const keyCode = generateSevenDigitString();
+    //   const reservation = await this.reservationRepository.create(operation);
+    //   console.log(
+    //     `[${new Date()}] Reservation created: ${reservation.id} - ${
+    //       operation.startDate
+    //     } - ${operation.name} - ${operation.venue}`
+    //   );
 
-      const password_id = await createDynamicKeyPassword(
-        `${operation.venue} - ${operation.name}`,
-        keyCode,
-        operation.startDate.getTime(),
-        operation.startDate.getTime() + 2 * 60 * 60 * 1000 // 2 hours
-      );
+    //   // Generate token to reservation
+    //   const keyCode = generateSevenDigitString();
 
-      if ("error" in password_id) {
-        console.error(
-          `[${new Date()}] Error creating password: ${
-            password_id.error.message
-          }`
-        );
-        continue;
-      }
-      const reservationWithToken = await this.reservationRepository.asignToken(
-        reservation,
-        keyCode,
-        password_id.password_id
-      );
+    //   const password_id = await createDynamicKeyPassword(
+    //     `${operation.venue} - ${operation.name}`,
+    //     keyCode,
+    //     operation.startDate.getTime(),
+    //     operation.startDate.getTime() + 2 * 60 * 60 * 1000 // 2 hours
+    //   );
 
-      console.log(
-        `[${new Date()}] Reservation token assigned: ${
-          reservationWithToken.id
-        } - ${operation.startDate} - ${operation.name} - ${operation.venue}`
-      );
-    }
+    //   if ("error" in password_id) {
+    //     console.error(
+    //       `[${new Date()}] Error creating password: ${
+    //         password_id.error.message
+    //       }`
+    //     );
+    //     continue;
+    //   }
+    //   const reservationWithToken = await this.reservationRepository.asignToken(
+    //     reservation,
+    //     keyCode,
+    //     password_id.password_id
+    //   );
+
+    //   console.log(
+    //     `[${new Date()}] Reservation token assigned: ${
+    //       reservationWithToken.id
+    //     } - ${operation.startDate} - ${operation.name} - ${operation.venue}`
+    //   );
+    // }
   }
 }

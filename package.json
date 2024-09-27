@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "ts-node --project tsconfig.server.json server.ts",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production ts-node --project tsconfig.server.json server.ts",
     "lint": "next lint",
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest -c jest.config.ts"
   },
@@ -20,6 +20,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "file-system-db": "^2.1.0",
+    "firebase-admin": "^12.5.0",
     "google-auth-library": "^9.14.1",
     "googleapis": "^144.0.0",
     "mailparser": "^3.7.1",
