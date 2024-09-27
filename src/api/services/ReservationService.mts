@@ -1,12 +1,19 @@
-import { authorize } from "../../functions/gmail-auth.mjs";
+import { generateSevenDigitString } from "../common/generateSevenDigitString.mjs";
+import { authorize } from "../gmail/auth.mjs";
+import {
+  EmailOperation,
+  emailParsing,
+  ReservationType,
+} from "../parseEmail/emailParsing.mjs";
 // import { createDynamicKeyPassword } from "../../functions/tuyaFns.mjs";
 // import { generateSevenDigitString } from "../../functions/utils.mjs";
 // import { ReservationType } from "../parseEmail/emailParsing.mjs";
 import {
+  EvtReservationCreated,
   ReservationRepository,
-  // ReservationState,
 } from "../repositories/Reservation.mjs";
-import { proccessMessages } from "../routes/messageRoutes.mjs";
+import { EmailData, proccessMessages } from "../routes/messageRoutes.mjs";
+import { createDynamicKeyPassword } from "../tuya/index.mjs";
 import { SMSService } from "./SMSService.mjs";
 
 export class ReservationService {
@@ -27,78 +34,154 @@ export class ReservationService {
         console.log(
           `[${new Date()}] Not authenticated. Try to configure Gmail email`
         );
+        return;
       }
     } catch (err) {
       console.error(`[${new Date()}] Error authorizing gmail apps ${err}`);
+      return;
     }
 
     console.log(`[${new Date()}] Reading emails...`);
-    const operations = await proccessMessages();
-    await this.reservationRepository.storeMails(operations);
+    const emailList = await proccessMessages();
 
-    // if (operations.length === 0) {
-    //   console.log(`[${new Date()}] No new emails found`);
-    //   return;
-    // }
+    if (emailList.length === 0) {
+      console.log(`[${new Date()}] No new emails found`);
+      return;
+    }
 
-    // for (const operation of operations) {
-    //   if (operation.type === ReservationType.CANCEL) {
-    //     const found = await this.reservationRepository.findReservation({
-    //       date: operation.startDate,
-    //       name: operation.name,
-    //       venue: operation.venue,
-    //     });
+    const listOfOperations: { op: EmailOperation; e: EmailData }[] = [];
+    for (const email of emailList) {
+      try {
+        const evt = emailParsing(email.html, email.date);
+        if (evt) {
+          listOfOperations.push({ op: evt, e: email });
+        }
+      } catch (err) {
+        this.reservationRepository.storeMailWithError(email);
+        console.error(`[${new Date()}] Error parsing email ${err}`);
+      }
+    }
 
-    //     if (!found || found.state === ReservationState.CANCELLED) {
-    //       continue;
-    //     }
-    //     this.reservationRepository.cancel(found.id);
-    //     console.log(
-    //       `[${new Date()}] Reservation cancelled: ${found.id} - Date: ${
-    //         found.reservation.startDate
-    //       } - Venue: ${found.reservation.venue} - Name: ${
-    //         found.reservation.name
-    //       } - Venue: ${found.reservation.venue}`
-    //     );
-    //     continue;
-    //   }
+    // TODO: Match creation operations with cancel operations in the same time and venue
 
-    //   const reservation = await this.reservationRepository.create(operation);
-    //   console.log(
-    //     `[${new Date()}] Reservation created: ${reservation.id} - ${
-    //       operation.startDate
-    //     } - ${operation.name} - ${operation.venue}`
-    //   );
+    for (const operation of listOfOperations) {
+      if (operation.op.type === ReservationType.CANCEL) {
+        // const found = await this.reservationRepository.findReservation({
+        //   date: operation.startDate,
+        //   name: operation.name,
+        //   venue: operation.venue,
+        // });
 
-    //   // Generate token to reservation
-    //   const keyCode = generateSevenDigitString();
+        // if (!found || found.state === ReservationState.CANCELLED) {
+        //   continue;
+        // }
+        // this.reservationRepository.cancel(found.id);
+        // console.log(
+        //   `[${new Date()}] Reservation cancelled: ${found.id} - Date: ${
+        //     found.reservation.startDate
+        //   } - Venue: ${found.reservation.venue} - Name: ${
+        //     found.reservation.name
+        //   } - Venue: ${found.reservation.venue}`
+        // );
+        continue;
+      }
 
-    //   const password_id = await createDynamicKeyPassword(
-    //     `${operation.venue} - ${operation.name}`,
-    //     keyCode,
-    //     operation.startDate.getTime(),
-    //     operation.startDate.getTime() + 2 * 60 * 60 * 1000 // 2 hours
-    //   );
+      // Generate token to reservation
+      const keyCode = generateSevenDigitString();
+      let password_id: string = "";
+      const startDate = operation.op.startDate.getTime();
+      const endDate = operation.op.startDate.getTime() + 2 * 60 * 60 * 1000; // 2 hours
+      try {
+        const dinamicPassRes = await createDynamicKeyPassword(
+          `${operation.op.venue} - ${operation.op.name}`,
+          keyCode,
+          startDate,
+          endDate
+        );
 
-    //   if ("error" in password_id) {
-    //     console.error(
-    //       `[${new Date()}] Error creating password: ${
-    //         password_id.error.message
-    //       }`
-    //     );
-    //     continue;
-    //   }
-    //   const reservationWithToken = await this.reservationRepository.asignToken(
-    //     reservation,
-    //     keyCode,
-    //     password_id.password_id
-    //   );
+        if ("error" in dinamicPassRes) {
+          console.error(
+            `[${new Date()}] Error creating password: ${
+              dinamicPassRes.error.message
+            }`
+          );
+          await this.reservationRepository.storeFailToCreatePassword({
+            date: operation.e.date,
+            endDate: new Date(endDate),
+            startDate: operation.op.startDate,
+            html: operation.e.html,
+            name: operation.op.name,
+            phone: operation.op.phone,
+            venue: operation.op.venue,
+          });
 
-    //   console.log(
-    //     `[${new Date()}] Reservation token assigned: ${
-    //       reservationWithToken.id
-    //     } - ${operation.startDate} - ${operation.name} - ${operation.venue}`
-    //   );
-    // }
+          continue;
+        }
+        password_id = dinamicPassRes.password_id;
+      } catch (error) {
+        console.error(
+          `[${new Date()}] Error creating password: ${(error as Error).message}`
+        );
+        // Unable to create password in Tuya
+        await this.reservationRepository.storeFailToCreatePassword({
+          date: operation.e.date,
+          endDate: new Date(endDate),
+          startDate: operation.op.startDate,
+          html: operation.e.html,
+          name: operation.op.name,
+          phone: operation.op.phone,
+          venue: operation.op.venue,
+        });
+        continue;
+      }
+
+      // Send SMS with token
+      const dataToStore: EvtReservationCreated = {
+        date: operation.e.date,
+        endDate: new Date(endDate),
+        startDate: operation.op.startDate,
+        html: operation.e.html,
+        name: operation.op.name,
+        phone: operation.op.phone,
+        venue: operation.op.venue,
+        token: keyCode,
+        passwordId: password_id,
+      };
+      try {
+        const error = await this.smsService.sendMessage(
+          operation.op.phone,
+          generateReservationMessage(
+            operation.op.name,
+            operation.op.startDate,
+            keyCode,
+            operation.op.venue
+          )
+        );
+        if (error) {
+          await this.reservationRepository.storeFailToNotifyClient(dataToStore);
+          continue;
+        }
+
+        await this.reservationRepository.storeCreatedReservation(dataToStore);
+      } catch (error) {
+        await this.reservationRepository.storeFailToNotifyClient(dataToStore);
+      }
+    }
   }
+}
+
+function generateReservationMessage(
+  name: string,
+  date: Date,
+  token: string,
+  venue: string
+) {
+  const formatoFecha = new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+
+  return `Hola ${name}! \n
+  Tu código de reserva para jugar en ${venue} de Bar ping Pong el ${formatoFecha} es ${token}`;
 }

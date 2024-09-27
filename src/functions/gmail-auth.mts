@@ -54,7 +54,6 @@ export const getOAuth2Client = () => {
 
 const authenticate = (token: Credentials) => {
   const oAuth2Client = getOAuth2Client();
-
   oAuth2Client.setCredentials(token);
   google.options({
     auth: oAuth2Client,

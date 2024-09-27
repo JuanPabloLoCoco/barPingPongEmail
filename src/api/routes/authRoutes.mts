@@ -11,7 +11,7 @@ const router = Router();
  * Route for authtenticate user, otherwise request a new token
  * prompting for user authorization
  */
-router.get("/auth", async (req: Request, res: Response) => {
+router.get("/gmail/auth", async (req: Request, res: Response) => {
   try {
     const authenticated = await authorize();
 

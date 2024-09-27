@@ -1,6 +1,9 @@
 import twilio from "twilio";
 
 export interface SMSService {
+  /**
+   * @returns undefined if the message was sent successfully, otherwise returns an error message
+   */
   sendMessage(to: string, message: string): Promise<string | undefined>;
 }
 

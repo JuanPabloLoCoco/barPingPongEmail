@@ -1,5 +1,5 @@
 import { load, CheerioAPI } from "cheerio";
-import { parsingDate } from "./parseDateTime";
+import { parsingDate } from "./parseDateTime.mjs";
 
 interface BaseReservation {
   name: string;
@@ -12,7 +12,7 @@ export enum ReservationType {
   CANCEL = "CANCEL",
 }
 
-export interface NewReservation extends BaseReservation {
+export interface EmailNewReservation extends BaseReservation {
   type: ReservationType.NEW;
   phone: string;
   endDate: Date;
@@ -22,12 +22,12 @@ export interface CancelReservation extends BaseReservation {
   type: ReservationType.CANCEL;
 }
 
-export type EventType = NewReservation | CancelReservation;
+export type EmailOperation = EmailNewReservation | CancelReservation;
 
 export function emailParsing(
   html: string,
   referenceDate: Date = new Date()
-): NewReservation | CancelReservation {
+): EmailNewReservation | CancelReservation {
   // Parse the email
   const cheerioAPI: CheerioAPI = load(html);
 
@@ -78,7 +78,7 @@ function parseNewReservation(
   $: CheerioAPI,
   venue: string,
   referenceDate: Date
-): NewReservation {
+): EmailNewReservation {
   const name = $('td:contains("Nombre")').next().text().trim();
   const phone = $('td:contains("Teléfono")').next().text().trim();
   const startDateStr = $('td:contains("Dia y hora")').next().text().trim();

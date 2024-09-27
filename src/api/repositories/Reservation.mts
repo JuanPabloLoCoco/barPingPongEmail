@@ -1,63 +1,62 @@
-import { NewReservation } from "../parseEmail/emailParsing.mjs";
+import { EmailAddress } from "mailparser";
+import { EmailData } from "../routes/messageRoutes.mjs";
 
-export type ReservationType =
-  | CreatedReservation
-  | ReservationWithToken
-  | NotifiedReservation
-  | CancelledReservation;
-
+export interface EmailDataWithId extends EmailData {
+  id: string;
+}
 export interface ReservationRepository {
-  storeMails(mails: EmailData[]): Promise<void>;
-  // create(reservation: NewReservation): Promise<CreatedReservation>;
-  // asignToken(
-  //   reservation: CreatedReservation,
-  //   code: string,
-  //   password_id: string
-  // ): Promise<ReservationWithToken>;
-  // notify(reservation: ReservationWithToken): Promise<NotifiedReservation>;
-  // get(id: string): Promise<ReservationType | null>;
-  // findReservation(reservation: {
-  //   date: Date;
-  //   venue: string;
-  //   name: string;
-  // }): Promise<ReservationType | null>;
-  // getFutureReservations(): Promise<NotifiedReservation[]>;
-  // cancel(id: string): Promise<CancelledReservation>;
+  storeCreatedReservation(p: EvtReservationCreated): Promise<void>;
+  storeFailToNotifyClient(p: EvtReservationCreated): Promise<void>;
+  storeFailToCreatePassword(p: EvtFailToCreatePassword): Promise<void>;
+  storeMailWithError(props: EvtMailWithError): Promise<void>;
+}
+
+export interface EvtMailWithError {
+  html: string;
+  from: EmailAddress[];
+  date: Date;
+}
+
+export interface EvtFailToCreatePassword {
+  html: string;
+  date: Date;
+  name: string;
+  phone: string;
+  venue: string;
+  startDate: Date;
+  endDate: Date;
+}
+
+export interface EvtReservationCreated {
+  html: string;
+  date: Date;
+  name: string;
+  phone: string;
+  venue: string;
+  startDate: Date;
+  endDate: Date;
+  token: string;
+  passwordId: string;
+}
+
+export interface ReservationData {
+  name: string;
+  phone: string;
+  venue: string;
+  startDate: Date;
+}
+
+export interface HtmlAndDate {
+  html: string;
+  date: Date;
 }
 
 export enum ReservationState {
+  EMAIL_WITH_ERROR = "EMAIL_WITH_ERROR",
+  FAIL_TO_CREATE_TOKEN = "FAIL_TO_CREATE_TOKEN",
+  CREATED_WITHOUT_NOTIFY = "CREATED_WITHOUT_NOTIFY",
   CREATED = "CREATED",
-  WITH_TOKEN = "WITH_TOKEN",
-  NOTIFIED = "NOTIFIED",
+  FAIL_TO_CANCEL = "FAIL_TO_CANCEL",
   CANCELLED = "CANCELLED",
-}
-
-interface BaseReservation {
-  id: string;
-  state: ReservationState;
-  reservation: NewReservation;
-  errors?: string[];
-  createdAt: Date;
-  updatedAt: Date | null;
-}
-
-export interface CreatedReservation extends BaseReservation {
-  state: ReservationState.CREATED;
-}
-
-export interface ReservationWithToken extends BaseReservation {
-  state: ReservationState.WITH_TOKEN;
-  token: string;
-  password_id: string;
-}
-
-export interface NotifiedReservation extends BaseReservation {
-  state: ReservationState.NOTIFIED;
-  token: string;
-  password_id: string;
-}
-
-export interface CancelledReservation extends BaseReservation {
-  state: ReservationState.CANCELLED;
-  reservation: NewReservation;
+  CREATED_AND_CANCELLED = "CREATED_AND_CANCELLED",
 }

@@ -2,18 +2,18 @@ import { describe, test, expect } from "@jest/globals";
 import {
   CancelReservation as CancelAppointment,
   emailParsing,
-  NewReservation,
+  EmailNewReservation,
   ReservationType,
 } from "./emailParsing.mjs";
 
 describe("Email parsing", () => {
   function validateEmailParsing(
     received: unknown,
-    expected: Partial<NewReservation | CancelAppointment> &
-      Pick<NewReservation | CancelAppointment, "type">
+    expected: Partial<EmailNewReservation | CancelAppointment> &
+      Pick<EmailNewReservation | CancelAppointment, "type">
   ) {
     expect(received).toHaveProperty("type");
-    const reservation = received as NewReservation | CancelAppointment;
+    const reservation = received as EmailNewReservation | CancelAppointment;
     expect(reservation.type).toBe(expected.type);
 
     // Validate the reservation object
@@ -31,7 +31,7 @@ describe("Email parsing", () => {
 
     if (reservation.type === ReservationType.NEW) {
       expect(reservation).toHaveProperty("phone");
-      const expRes = expected as NewReservation;
+      const expRes = expected as EmailNewReservation;
       if (expRes.phone !== undefined) {
         expect(reservation.phone).toBe(expRes.phone);
       }

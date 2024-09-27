@@ -1,8 +1,15 @@
-import { ReservationRepository } from "./Reservation";
 import admin, { ServiceAccount } from "firebase-admin";
 import { resolve } from "path";
-import { EmailData } from "../routes/messagesRoutes";
-
+import {
+  EvtReservationCreated,
+  HtmlAndDate,
+  ReservationData,
+  ReservationRepository,
+  ReservationState,
+} from "./Reservation.mjs";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import { EmailAddress } from "mailparser";
 export class FirebaseRepository implements ReservationRepository {
   databaseUrl: string;
   app: admin.app.App | null;
@@ -24,6 +31,8 @@ export class FirebaseRepository implements ReservationRepository {
   configure(): void {
     // Configure Firebase
 
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
     const path = resolve(__dirname, "../../../firebase-config.json");
 
     this.app = admin.initializeApp({
@@ -34,39 +43,74 @@ export class FirebaseRepository implements ReservationRepository {
     return;
   }
 
-  async storeMails(mails: EmailData[]): Promise<void> {
-    const db = this.getDb().ref("m");
-
-    for (const mail of mails) {
-      const mailRef = db.push();
-      await mailRef.set(mail);
-    }
-
+  async storeMailWithError(props: {
+    html: string;
+    from: EmailAddress[];
+    date: Date;
+  }): Promise<void> {
+    const db = this.getDb().ref("e");
+    const mailRef = db.push();
+    await mailRef.set({
+      html: props.html,
+      date: props.date.getTime(),
+      from: props.from,
+      type: ReservationState.EMAIL_WITH_ERROR,
+      c: new Date().getTime(),
+    });
+  }
+  async storeFailToCreatePassword(
+    p: { html: string; date: Date; endDate: Date } & ReservationData
+  ): Promise<void> {
+    const db = this.getDb().ref("r");
+    const mailRef = db.push();
+    await mailRef.set({
+      html: p.html,
+      date: p.date.getTime(),
+      endDate: p.endDate.getTime(),
+      startDate: p.startDate.getTime(),
+      name: p.name,
+      phone: p.phone,
+      venue: p.venue,
+      type: ReservationState.FAIL_TO_CREATE_TOKEN,
+      c: new Date().getTime(),
+    });
     return;
   }
 
-  async getReservation(id: string): Promise<any> {
+  async storeFailToNotifyClient(
+    p: { token: string; passwordId: string; endDate: Date } & ReservationData &
+      HtmlAndDate
+  ): Promise<void> {
     const db = this.getDb().ref("r");
-    const reservationRef = db.push(id);
-    // const doc = await reservationRef.get();
-    // if (!doc.exists) {
-    //   throw new Error("No such reservation!");
-    // }
-    // return doc.data();
+    const mailRef = db.push();
+    await mailRef.set({
+      type: ReservationState.CREATED_WITHOUT_NOTIFY,
+      html: p.html,
+      date: p.date.getTime(),
+      endDate: p.endDate.getTime(),
+      startDate: p.startDate.getTime(),
+      name: p.name,
+      phone: p.phone,
+      venue: p.venue,
+      token: p.token,
+      passwordId: p.passwordId,
+    });
   }
-
-  async createReservation(data: any): Promise<void> {
-    // const reservationRef = this.getDb().collection("reservations").doc();
-    // await reservationRef.set(data);
-  }
-
-  async updateReservation(id: string, data: any): Promise<void> {
-    // const reservationRef = this.getDb().collection("reservations").doc(id);
-    // await reservationRef.update(data);
-  }
-
-  async deleteReservation(id: string): Promise<void> {
-    // const reservationRef = this.getDb().collection("reservations").doc(id);
-    // await reservationRef.delete();
+  async storeCreatedReservation(p: EvtReservationCreated): Promise<void> {
+    const db = this.getDb().ref("r");
+    const mailRef = db.push();
+    await mailRef.set({
+      type: ReservationState.CREATED,
+      html: p.html,
+      date: p.date.getTime(),
+      endDate: p.endDate.getTime(),
+      startDate: p.startDate.getTime(),
+      name: p.name,
+      phone: p.phone,
+      venue: p.venue,
+      token: p.token,
+      passwordId: p.passwordId,
+    });
+    return;
   }
 }

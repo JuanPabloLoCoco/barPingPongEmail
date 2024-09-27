@@ -19,53 +19,20 @@ app.use(express.json());
 
 // for parsing application/xwww-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
-
 // gmail auth routes
-app.use("/gmail", authRoutes);
+app.use("", authRoutes);
 
-// auth middleware for api routes
+// auth middleware for api route
 app.use(authMiddleware);
 
 const port = 8900; //process.env.PORT || 8900;
-
-// export async function sendEmail(
-//   to: string,
-//   subject: string,
-//   text: string
-// ): Promise<void> {
-//   // Create a transporter object using SMTP transport
-//   const transporter = nodemailer.createTransport({
-//     host: "smtp.example.com", // Replace with your SMTP server host
-//     port: 587, // Replace with your SMTP server port
-//     secure: false, // true for 465, false for other ports
-//     auth: {
-//       user: "your-email@example.com", // Replace with your email
-//       pass: "your-email-password", // Replace with your email password
-//     },
-//   });
-
-//   // Define the email options
-//   const mailOptions = {
-//     from: "your-email@example.com", // Replace with your email
-//     to,
-//     subject,
-//     text,
-//   };
-
-//   // Send the email
-//   await transporter.sendMail(mailOptions);
-// }
-
-// app.get("/reademails", async (req, res) => {
-//   // await readEmails();
-//   res.send("Emails have been read and logged to the console.");
-// });
 
 const server = app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
 
 const firebaseRepository = new FirebaseRepository(config.firebase.databaseUrl);
+firebaseRepository.configure();
 const twilioService = new SMSServiceImpl(
   "+5491158767333",
   config.twilio.accessToken,

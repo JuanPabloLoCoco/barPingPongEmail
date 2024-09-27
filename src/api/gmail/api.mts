@@ -63,7 +63,6 @@ export const markAsRead = async (id: string) => {
       removeLabelIds: ["UNREAD"],
     },
   });
-  console.log(res);
 };
 
 export const modifyMessageLabels = async (
