@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
-import * as gmail from "../functions/gmail-api.mjs";
-import { emailParsing, EventType } from "../emailParsing.mjs";
 import { EmailAddress } from "mailparser";
+import { getMessages, markAsRead } from "../gmail/api";
+import { emailParsing, EventType } from "../parseEmail/emailParsing.mjs";
 
 const router = Router();
 
@@ -17,7 +17,7 @@ router.get("/getMessages", async (req: Request, res: Response) => {
 });
 
 export async function proccessMessages(): Promise<EventType[]> {
-  const messages = await gmail.getMessages();
+  const messages = await getMessages();
 
   const listOfOrders: EventType[] = [];
   for (const message of messages) {
@@ -42,7 +42,7 @@ export async function proccessMessages(): Promise<EventType[]> {
       const evt = emailParsing(html, new Date());
       if (evt) {
         listOfOrders.push(evt);
-        await gmail.markAsRead(message.messageId!);
+        await markAsRead(message.messageId!);
       }
     } catch (err) {
       continue;

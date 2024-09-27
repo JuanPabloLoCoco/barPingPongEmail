@@ -1,18 +1,23 @@
 import { Request, Response, Router } from "express";
-import * as auth from "../functions/gmail-auth.mjs";
+import {
+  authorize,
+  getNewToken,
+  getOAuth2Client,
+  saveToken,
+} from "../gmail/auth.mjs";
 
 const router = Router();
 /**
  * Route for authtenticate user, otherwise request a new token
  * prompting for user authorization
  */
-router.get("/gmailAuth", async (req: Request, res: Response) => {
+router.get("/auth", async (req: Request, res: Response) => {
   try {
-    const authenticated = await auth.authorize();
+    const authenticated = await authorize();
 
     // if not authenticated, request new token
     if (!authenticated) {
-      const authorizeUrl = await auth.getNewToken();
+      const authorizeUrl = await getNewToken();
       return res.send(
         `<script>window.open("${authorizeUrl}", "_blank");</script>`
       );
@@ -33,11 +38,11 @@ router.get("/oauth2Callback", async (req: Request, res: Response) => {
     // get authorization code from request
     const code = req.query.code as string;
 
-    const oAuth2Client = auth.getOAuth2Client();
+    const oAuth2Client = getOAuth2Client();
     const result = await oAuth2Client.getToken(code);
     const tokens = result.tokens;
 
-    await auth.saveToken(tokens);
+    await saveToken(tokens);
 
     console.log("Successfully authorized");
     return res.send("<script>window.close();</script>");

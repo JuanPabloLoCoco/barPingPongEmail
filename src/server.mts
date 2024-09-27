@@ -1,13 +1,11 @@
 import express from "express";
 // import nodemailer from "nodemailer";
 import cors from "cors";
-import { authMiddleware } from "./middleware/auth-middleware";
-import * as apiRoutes from "./routes/api-routes";
-import * as authRoutes from "./routes/auth-routes";
-import * as tuyaRoutes from "./routes/tuya-routes";
-import config from "./config";
-import { ReservationService } from "./services/ReservationService";
-import { LocalReservationRepository } from "./repositories/LocalRepository";
+import { authMiddleware } from "./api/middleware/auth.mjs";
+import { router as authRoutes } from "./api/routes/authRoutes.mjs";
+import { ReservationService } from "./api/services/ReservationService";
+import { LocalReservationRepository } from "./api/repositories/LocalRepository.mjs";
+import config from "./config.mjs";
 
 const app = express();
 
@@ -22,16 +20,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // gmail auth routes
-app.use("/", authRoutes.router);
+app.use("/", authRoutes);
 
 // auth middleware for api routes
 app.use(authMiddleware);
 
-// gmail api routes
-app.use("/api", apiRoutes.router);
-
-//tuya routes
-app.use("/tuya", tuyaRoutes.router);
 const port = 8900; //process.env.PORT || 8900;
 
 // export async function sendEmail(

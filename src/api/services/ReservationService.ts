@@ -1,13 +1,12 @@
-import { ReservationType } from "../emailParsing.mjs";
-import { markAsRead } from "../functions/gmail-api.mjs";
-import { createDynamicKeyPassword } from "../functions/tuyaFns.mjs";
-import { generateSevenDigitString } from "../functions/utils.mjs";
+import { authorize } from "../../functions/gmail-auth.mjs";
+import { createDynamicKeyPassword } from "../../functions/tuyaFns.mjs";
+import { generateSevenDigitString } from "../../functions/utils.mjs";
+import { ReservationType } from "../parseEmail/emailParsing.mjs";
 import {
   ReservationRepository,
   ReservationState,
 } from "../repositories/Reservation.mjs";
-import { proccessMessages } from "../routes/api-routes.mjs";
-import * as auth from "../functions/gmail-auth.mjs";
+import { proccessMessages } from "../routes/messageRoutes.mjs";
 
 export class ReservationService {
   reservationRepository: ReservationRepository;
@@ -17,7 +16,7 @@ export class ReservationService {
 
   async readEmails(): Promise<void> {
     try {
-      const authenticated = await auth.authorize();
+      const authenticated = await authorize();
       if (!authenticated) {
         console.log(
           `[${new Date()}] Not authenticated. Try to configure Gmail email`

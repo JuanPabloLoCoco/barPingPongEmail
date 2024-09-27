@@ -1,4 +1,4 @@
-import { NewReservation } from "../emailParsing.mjs";
+import { NewReservation } from "../../emailParsing.mjs";
 import {
   CancelledReservation,
   CreatedReservation,

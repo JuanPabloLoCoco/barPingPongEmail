@@ -1,5 +1,5 @@
-import { load } from "cheerio";
-import { parsingDate, separarFechaHora } from "./utils/parseDateTime.mjs";
+import { load, CheerioAPI } from "cheerio";
+import { parsingDate } from "./parseDateTime";
 
 interface BaseReservation {
   name: string;
@@ -29,19 +29,19 @@ export function emailParsing(
   referenceDate: Date = new Date()
 ): NewReservation | CancelReservation {
   // Parse the email
-  const $ = load(html);
+  const cheerioAPI: CheerioAPI = load(html);
 
   // Extract the information
-  const venue = $('td:contains("Cancha")').next().text().trim();
+  const venue = cheerioAPI('td:contains("Cancha")').next().text().trim();
 
   const isNewReservation =
-    $('h1:contains("¡Nueva reserva online!")').length > 0;
+    cheerioAPI('h1:contains("¡Nueva reserva online!")').length > 0;
 
   if (isNewReservation) {
-    return parseNewReservation($, venue, referenceDate);
+    return parseNewReservation(cheerioAPI, venue, referenceDate);
   }
 
-  const isCancelReservation = $("body")
+  const isCancelReservation = cheerioAPI("body")
     .text()
     .includes("Reserva online cancelada");
 
@@ -49,12 +49,15 @@ export function emailParsing(
     throw new Error("Invalid email");
   }
 
-  const name = $('td:contains("Jugador")')
+  const name = cheerioAPI('td:contains("Jugador")')
     .next() // Selecciona el siguiente 'td' que contiene el nombre
     .text() // Obtiene el texto del elemento
     .trim(); // Elimina espacios en blanco al principio y al final
 
-  const startDateStr = $('td:contains("Dia y hora")').next().text().trim();
+  const startDateStr = cheerioAPI('td:contains("Dia y hora")')
+    .next()
+    .text()
+    .trim();
 
   let startDate: Date | null = null;
   try {
@@ -72,7 +75,7 @@ export function emailParsing(
 }
 
 function parseNewReservation(
-  $: Root,
+  $: CheerioAPI,
   venue: string,
   referenceDate: Date
 ): NewReservation {

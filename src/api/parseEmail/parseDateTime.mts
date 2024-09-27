@@ -43,14 +43,16 @@ function strIsString(str: string): boolean {
   return Number.isInteger(parseInt(str));
 }
 
-interface SepararFechaHoraRet {
+interface GetDateAndTimeFromStringRet {
   diaSemana: string;
   dia: number;
   mes: number;
   hora: string;
 }
 
-export function separarFechaHora(cadena: string): SepararFechaHoraRet {
+export function getDateAndTimeFromString(
+  cadena: string
+): GetDateAndTimeFromStringRet {
   let estado: State = State.DIA_SEMANA; // Estado inicial
   let diaSemana = "";
   let dia = 0;
@@ -164,7 +166,7 @@ export function separarFechaHora(cadena: string): SepararFechaHoraRet {
 
 export function parsingDate(dateStr: string, today: Date): Date | null {
   try {
-    const parsedDate = separarFechaHora(dateStr);
+    const parsedDate = getDateAndTimeFromString(dateStr);
 
     // Día, mes y hora en UTC
     const dayUTC = parsedDate.dia; // Por ejemplo, el día 2

@@ -1,5 +1,5 @@
-import * as auth from "../functions/gmail-auth.mjs";
 import { Request, Response, NextFunction } from "express";
+import { authorize } from "../gmail/auth.mjs";
 
 export const authMiddleware = async (
   _: Request,
@@ -7,7 +7,7 @@ export const authMiddleware = async (
   next: NextFunction
 ) => {
   try {
-    const authenticated = await auth.authorize();
+    const authenticated = await authorize();
     if (!authenticated) {
       throw "No Authenticated";
     }
