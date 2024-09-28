@@ -2,6 +2,7 @@ import express from "express";
 // import nodemailer from "nodemailer";
 import cors from "cors";
 import { authMiddleware } from "./api/middleware/auth.mjs";
+import { router as homeRoutes } from "./api/routes/home.mjs";
 import { router as authRoutes } from "./api/routes/authRoutes.mjs";
 import { router as tuyaRoutes } from "./api/routes/tuyaRoutes.mjs";
 import { ReservationService } from "./api/services/ReservationService.mjs";
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 // gmail auth routes
 app.use("", authRoutes);
 app.use("", tuyaRoutes);
+app.use("", homeRoutes);
 
 // auth middleware for api route
 app.use(authMiddleware);
