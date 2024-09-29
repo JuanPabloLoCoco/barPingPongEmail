@@ -2,6 +2,7 @@ import express from "express";
 // import nodemailer from "nodemailer";
 import cors from "cors";
 import { authMiddleware } from "./api/middleware/auth.mjs";
+import { router as homeRoutes } from "./api/routes/home.mjs";
 import { router as authRoutes } from "./api/routes/authRoutes.mjs";
 import { router as tuyaRoutes } from "./api/routes/tuyaRoutes.mjs";
 import { ReservationService } from "./api/services/ReservationService.mjs";
@@ -23,29 +24,33 @@ app.use(express.urlencoded({ extended: true }));
 // gmail auth routes
 app.use("", authRoutes);
 app.use("", tuyaRoutes);
+app.use("", homeRoutes);
 
 // auth middleware for api route
 app.use(authMiddleware);
 
-const port = 8900; //process.env.PORT || 8900;
+const port = process.env.PORT || 8900;
 
 const server = app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
 
+
 const firebaseRepository = new FirebaseRepository(config.firebase.databaseUrl);
-firebaseRepository.configure();
+await firebaseRepository.configure();
+
 const twilioService = new SMSServiceImpl(
   "+19546378467",
   config.twilio.accessToken,
   config.twilio.accountSid
 );
+
 const reservationService = new ReservationService(
   firebaseRepository,
   twilioService
 );
 
-const interval = setInterval(() => reservationService.readEmails(), 30 * 1000);
+const interval = setInterval(() => reservationService.readEmails(), 120 * 1000);
 
 server.on("close", () => {
   clearInterval(interval);

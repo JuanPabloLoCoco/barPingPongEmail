@@ -6,7 +6,8 @@
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest -c jest.config.ts",
     "build": "swc src -d dist",
-    "dev": "node --import @swc-node/register/esm-register --trace-deprecation --no-warnings --enable-source-maps --trace-warnings --report-on-fatalerror --report-uncaught-exception --report-directory=reports/nodejs --inspect=5151 --watch src/server.mts"
+    "dev": "node --import @swc-node/register/esm-register --trace-deprecation --no-warnings --enable-source-maps --trace-warnings --report-on-fatalerror --report-uncaught-exception --report-directory=reports/nodejs --inspect=5151 --watch src/server.mts",
+    "start": "node --import @swc-node/register/esm-register --report-on-fatalerror --report-uncaught-exception src/server.mts"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -20,7 +21,6 @@
     "@swc-node/register": "^1.10.9",
     "@tuya/tuya-connector-nodejs": "^2.1.2",
     "@types/qs": "^6.9.16",
-    "@types/twilio": "^3.19.3",
     "aes-js": "3.1.2",
     "cheerio": "1.0.0",
     "chokidar": "3.6.0",

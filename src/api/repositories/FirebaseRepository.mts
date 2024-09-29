@@ -1,5 +1,6 @@
-import admin, { ServiceAccount } from "firebase-admin";
-import { resolve } from "path";
+import admin from "firebase-admin";
+import { applicationDefault } from "firebase-admin/app";
+
 import {
   EvtReservationCreated,
   HtmlAndDate,
@@ -7,8 +8,7 @@ import {
   ReservationRepository,
   ReservationState,
 } from "./Reservation.mjs";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+
 import { EmailAddress } from "mailparser";
 import { CancelReservation } from "../parseEmail/emailParsing.mjs";
 export class FirebaseRepository implements ReservationRepository {
@@ -29,18 +29,16 @@ export class FirebaseRepository implements ReservationRepository {
     this.db = null;
   }
 
-  configure(): void {
+  async configure() {
     // Configure Firebase
-
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-    const path = resolve(__dirname, "../../../firebase-config.json");
-
-    this.app = admin.initializeApp({
-      credential: admin.credential.cert(path as ServiceAccount),
-      databaseURL: this.databaseUrl,
+    const firebase_admin_app = admin.initializeApp({
+      credential: applicationDefault(),
+      databaseURL: process.env.FIREBASE_DATABASE_URL
     });
+
+    this.app = firebase_admin_app;
     this.db = this.app.database();
+
     return;
   }
 
