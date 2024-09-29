@@ -33,7 +33,7 @@ export class FirebaseRepository implements ReservationRepository {
     // Configure Firebase
     const firebase_admin_app = admin.initializeApp({
       credential: applicationDefault(),
-      databaseURL: this.databaseUrl
+      databaseURL: process.env.FIREBASE_DATABASE_URL
     });
 
     this.app = firebase_admin_app;
