@@ -20,9 +20,6 @@ importers:
       '@types/qs':
         specifier: ^6.9.16
         version: 6.9.16
-      '@types/twilio':
-        specifier: ^3.19.3
-        version: 3.19.3
       aes-js:
         specifier: 3.1.2
         version: 3.1.2
@@ -892,10 +889,6 @@ packages:
 
   '@types/tough-cookie@4.0.5':
     resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
-
-  '@types/twilio@3.19.3':
-    resolution: {integrity: sha512-W53Z0TDCu6clZ5CzTWHRPnpQAad+AANglx6WiQ4Mkxxw21o4BYBx5EhkfR6J4iYqY58rtWB3r8kDGJ4y1uTUGQ==}
-    deprecated: This is a stub types definition. twilio provides its own type definitions, so you do not need this installed.
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -4051,13 +4044,6 @@ snapshots:
 
   '@types/tough-cookie@4.0.5':
     optional: true
-
-  '@types/twilio@3.19.3':
-    dependencies:
-      twilio: 5.3.2
-    transitivePeerDependencies:
-      - debug
-      - supports-color
 
   '@types/yargs-parser@21.0.3': {}
 

@@ -29,25 +29,28 @@ app.use("", homeRoutes);
 // auth middleware for api route
 app.use(authMiddleware);
 
-const port = 8900; //process.env.PORT || 8900;
+const port = process.env.PORT || 8900;
 
 const server = app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
 
+
 const firebaseRepository = new FirebaseRepository(config.firebase.databaseUrl);
-firebaseRepository.configure();
+await firebaseRepository.configure();
+
 const twilioService = new SMSServiceImpl(
   "+19546378467",
   config.twilio.accessToken,
   config.twilio.accountSid
 );
+
 const reservationService = new ReservationService(
   firebaseRepository,
   twilioService
 );
 
-const interval = setInterval(() => reservationService.readEmails(), 30 * 1000);
+const interval = setInterval(() => reservationService.readEmails(), 120 * 1000);
 
 server.on("close", () => {
   clearInterval(interval);
